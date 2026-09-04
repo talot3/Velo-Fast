@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GELIC | Controle de Licenças</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Login Master Screen -->
+    <div id="login-container" class="login-container">
+        <div class="login-left">
+            <div class="login-form-wrapper">
+                <div class="login-header">
+                    <div class="login-logo">
+                        <i data-lucide="shield-alert" style="width: 32px; height: 32px; color: var(--brand);"></i>
+                        <span>GELIC</span>
+                    </div>
+                    <h2>Gerenciamento de Licenças</h2>
+                    <p>Controle central de licenças e multi-lojas</p>
+                </div>
+
+                <form id="login-form" onsubmit="handleMasterLogin(event)">
+                    <div class="login-input-group">
+                        <label for="login-username">Login / Usuário</label>
+                        <div class="login-input-wrapper">
+                            <i data-lucide="user"></i>
+                            <input type="text" id="login-username" value="master" placeholder="Digite o usuário master..." required autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="login-input-group">
+                        <label for="login-password">Senha de Segurança</label>
+                        <div class="login-input-wrapper">
+                            <i data-lucide="lock"></i>
+                            <input type="password" id="login-password" value="123" placeholder="Digite a senha master..." required autocomplete="current-password">
+                            <button type="button" class="toggle-pass-btn" onclick="toggleLoginPassword()">
+                                <i data-lucide="eye" id="toggle-pass-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="login-error-msg" class="login-error-msg hidden">
+                        <i data-lucide="alert-circle"></i>
+                        <span>Usuário ou senha GELIC incorretos.</span>
+                    </div>
+
+                    <button type="submit" class="btn-login">
+                        <span>Acessar Painel</span>
+                        <i data-lucide="arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="login-footer-copyright">
+                    © 2026 VELO FAST Sistemas.
+                </div>
+            </div>
+        </div>
+
+        <div class="login-right">
+            <div class="carousel-card-wrapper">
+                <div class="carousel-slide-content">
+                    <div class="carousel-icon-badge" style="background: rgba(128, 0, 32, 0.1); border-color: rgba(128, 0, 32, 0.2);">
+                        <i data-lucide="shield-check" style="color: var(--brand);"></i>
+                    </div>
+                    <h3>Controle Multi-Tenant</h3>
+                    <h4>Gestão dinâmica de licenças e banco de dados SQLite</h4>
+                    <p>Cadastre novas filiais ou clientes, gere bancos de dados dedicados no servidor local, monitore o vencimento de licenças e bloqueie mensalidades com total controle administrativo centralizado.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Wrapper -->
+    <div class="app-wrapper">
+        <!-- Sidebar refined -->
+        <aside class="sidebar">
+            <div class="brand-area">
+                <div class="brand-icon">
+                    <i data-lucide="shield" stroke-width="3"></i>
+                </div>
+                <h1 class="brand-name">GELIC</h1>
+            </div>
+
+            <nav class="nav-group">
+                <button class="nav-item active" onclick="renderMasterTab('stores')">
+                    <i data-lucide="store"></i>
+                    <span>Licenciamento Lojas</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="user-avatar">
+                    <i data-lucide="shield-check" style="width: 20px; height: 20px; color: var(--brand);"></i>
+                </div>
+                <div style="flex: 1">
+                    <p style="font-size: 13px; font-weight: 700">GELIC</p>
+                    <p style="font-size: 11px; color: var(--text-sub)">Painel do Revendedor</p>
+                </div>
+                <button onclick="handleMasterLogout()" class="logout-btn" title="Sair do GELIC">
+                    <i data-lucide="log-out" style="width: 18px; opacity: 0.7;"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Stage -->
+        <main class="main-stage">
+            <header class="header-bar">
+                <div class="header-left">
+                    <h2 class="page-title" id="page-title">Painel de Licenciamento</h2>
+                </div>
+                <div class="header-right" style="display: flex; align-items: center; gap: 16px;">
+                    <div id="live-clock" style="font-weight: 700; color: var(--brand); width: 80px"></div>
+                </div>
+            </header>
+
+            <div class="content-scroll" id="content-area">
+                <!-- Content Injected via app.js -->
+            </div>
+        </main>
+    </div>
+
+    <!-- New Client/Store Form Modal -->
+    <div id="product-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px; width: 90%;">
+            <div class="modal-header">
+                <h3 id="product-modal-title">Cadastrar Novo Cliente</h3>
+                <button class="close-btn" onclick="closeProductModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body" id="product-form-body">
+                <!-- Form Injected via app.js -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeProductModal()">Cancelar</button>
+                <button class="btn-save" id="btn-modal-save" onclick="saveNewStoreMaster()">Gravar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Update Live Clock
+        setInterval(() => {
+            const now = new Date();
+            const clockEl = document.getElementById('live-clock');
+            if (clockEl) {
+                clockEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/pdv", "destination": "/pdv/index.html" },
+    { "source": "/portal", "destination": "/portal/index.html" },
+    { "source": "/gelic", "destination": "/gelic/index.html" }
+  ]
+}

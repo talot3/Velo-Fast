@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VELO | PORTAL </title>
+
+    <!-- PWA & Mobile Optimization -->
+    <meta name="theme-color" content="#0b0f19">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VELO Portal">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="manifest" href="manifest.json">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- PWA Smart Installer Script -->
+    <script>
+        let deferredPrompt;
+
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker do Portal registrado:', reg.scope))
+                    .catch(err => console.error('Erro ao registrar Service Worker do Portal:', err));
+            });
+        }
+
+        // Intercepta prompt nativo de instalação
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('beforeinstallprompt do Portal disparado. Pronto para instalação direta.');
+            // showInstallBanner(); // Desativado a pedido do usuário
+        });
+
+        function showInstallBanner() {
+            return; // Desativado a pedido do usuário
+            if (window.matchMedia('(display-mode: standalone)').matches ||
+                window.navigator.standalone === true) {
+                return;
+            }
+            const banner = document.getElementById('pwa-install-banner');
+            if (banner) {
+                banner.classList.add('show');
+            }
+        }
+
+        function hideInstallBanner() {
+            const banner = document.getElementById('pwa-install-banner');
+            if (banner) {
+                banner.classList.remove('show');
+            }
+        }
+
+        window.dismissInstallBanner = function () {
+            hideInstallBanner();
+            sessionStorage.setItem('pwa_banner_dismissed', 'true');
+        };
+
+        window.triggerPWAInstall = function () {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuário instalou o PWA do Portal.');
+                    }
+                    deferredPrompt = null;
+                    hideInstallBanner();
+                });
+            } else {
+                showInstructionsModal();
+            }
+        };
+
+        window.showInstructionsModal = function () {
+            const modal = document.getElementById('pwa-instructions-modal');
+            if (modal) {
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const step2Text = document.getElementById('pwa-step-2-text');
+                const step3Text = document.getElementById('pwa-step-3-text');
+
+                if (isIOS) {
+                    if (step2Text) step2Text.innerHTML = 'No seu iPhone/iPad, abra o **Safari**, acesse o endereço e toque no botão **Compartilhar** (ícone quadrado com seta para cima) na barra inferior.';
+                    if (step3Text) step3Text.innerHTML = 'Deslize a lista de opções e toque em **Adicionar à Tela de Início** para instalar o VELO Portal em tela cheia.';
+                }
+
+                modal.classList.add('show');
+            }
+        };
+
+        window.hideInstructionsModal = function () {
+            const modal = document.getElementById('pwa-instructions-modal');
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        };
+
+        // Mostrar banner automaticamente após 1.5s
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+                const dismissed = sessionStorage.getItem('pwa_banner_dismissed') === 'true';
+                if (!isStandalone && !dismissed) {
+                    // showInstallBanner(); // Desativado a pedido do usuário
+                }
+            }, 1500);
+        });
+    </script>
+</head>
+
+<body>
+    <!-- PWA Install Banner & Modal -->
+    <div id="pwa-install-banner" class="pwa-install-banner" style="display: none !important;">
+        <div class="pwa-install-info">
+            <div class="pwa-install-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+            </div>
+            <div class="pwa-install-text">
+                <h3>VELO Portal Gestor</h3>
+                <p>Instale para acompanhar relatórios e inventários de qualquer lugar</p>
+            </div>
+        </div>
+        <div class="pwa-install-actions">
+            <button class="pwa-install-btn" onclick="triggerPWAInstall()">INSTALAR</button>
+            <button class="pwa-install-close" onclick="dismissInstallBanner()">✕</button>
+        </div>
+    </div>
+
+    <div id="pwa-instructions-modal" class="pwa-modal-overlay">
+        <div class="pwa-modal-card">
+            <div class="pwa-modal-header">
+                <h2>Como Instalar o VELO Portal</h2>
+                <button class="pwa-install-close" style="padding: 2px;" onclick="hideInstructionsModal()">✕</button>
+            </div>
+            <div class="pwa-modal-steps">
+                <div class="pwa-modal-step">
+                    <div class="pwa-modal-step-number">1</div>
+                    <div class="pwa-modal-step-text" id="pwa-step-1-text">
+                        Para a instalação automática nativa, acesse o sistema a partir de um servidor seguro **HTTPS**
+                        ou diretamente via **localhost**.
+                    </div>
+                </div>
+                <div class="pwa-modal-step">
+                    <div class="pwa-modal-step-number">2</div>
+                    <div class="pwa-modal-step-text" id="pwa-step-2-text">
+                        <strong>No Android/Chrome</strong>: Toque no menu do navegador (três pontinhos no canto superior
+                        direito) e escolha **Instalar aplicativo** ou **Adicionar à tela inicial**.
+                    </div>
+                </div>
+                <div class="pwa-modal-step">
+                    <div class="pwa-modal-step-number">3</div>
+                    <div class="pwa-modal-step-text" id="pwa-step-3-text">
+                        <strong>No iPhone/Safari</strong>: Toque no botão **Compartilhar** (ícone quadrado com seta para
+                        cima) na barra de navegação e selecione **Adicionar à Tela de Início**.
+                    </div>
+                </div>
+            </div>
+            <div class="pwa-modal-footer">
+                <button class="pwa-modal-btn-entendi" onclick="hideInstructionsModal()">Entendi</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        if (localStorage.getItem('velo_portal_logged_in') === 'true') {
+            document.body.classList.add('authenticated');
+        }
+    </script>
+
+    <!-- Login Screen -->
+    <div id="login-container" class="login-container">
+        <!-- Coluna Esquerda: Form de Login -->
+        <div class="login-left">
+            <div class="login-form-wrapper">
+                <div class="login-header">
+                    <div class="login-logo">
+                        <i data-lucide="zap" style="width: 32px; height: 32px;"></i>
+                        <span>VELO</span>
+                    </div>
+                    <h2>Entrar no Velo</h2>
+                    <p>Acesse sua conta para gerenciar seu negócio</p>
+                </div>
+
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="login-input-group">
+                        <label for="login-username">Login / Usuário</label>
+                        <div class="login-input-wrapper">
+                            <i data-lucide="user"></i>
+                            <input type="text" id="login-username" value="admin" placeholder="Digite seu usuário..."
+                                required autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="login-input-group">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label for="login-password">Senha</label>
+                            <a href="#" class="forgot-pass-link" onclick="forgotPassword(event)">Esqueci minha senha</a>
+                        </div>
+                        <div class="login-input-wrapper">
+                            <i data-lucide="lock"></i>
+                            <input type="password" id="login-password" value="123" placeholder="Digite sua senha..."
+                                required autocomplete="current-password">
+                            <button type="button" class="toggle-pass-btn" onclick="toggleLoginPassword()">
+                                <i data-lucide="eye" id="toggle-pass-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="login-error-msg" class="login-error-msg hidden">
+                        <i data-lucide="alert-circle"></i>
+                        <span>Usuário ou senha incorretos.</span>
+                    </div>
+
+                    <button type="submit" class="btn-login">
+                        <span>Entrar</span>
+                        <i data-lucide="arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="login-footer-copyright">
+                    © 2026 Velo. Todos os direitos reservados.
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna Direita: Carousel de Funcionalidades -->
+        <div class="login-right">
+            <!-- Abas do Carousel -->
+            <div class="carousel-tabs">
+                <button class="carousel-tab-btn active" onclick="setSlide(0)">Frente de Caixa</button>
+                <button class="carousel-tab-btn" onclick="setSlide(1)">Relatórios</button>
+                <button class="carousel-tab-btn" onclick="setSlide(2)">Impressoras</button>
+                <button class="carousel-tab-btn" onclick="setSlide(3)">Segurança</button>
+            </div>
+
+            <!-- Card Central do Carousel -->
+            <div class="carousel-card-wrapper">
+                <!-- Botão Anterior -->
+                <button class="carousel-nav-btn prev" onclick="prevSlide()"><i data-lucide="chevron-left"></i></button>
+
+                <!-- Conteúdo do Slide -->
+                <div class="carousel-slide-content">
+                    <div class="carousel-icon-badge">
+                        <i id="slide-icon" data-lucide="monitor"></i>
+                    </div>
+                    <h3 id="slide-title">Frente de Caixa</h3>
+                    <h4 id="slide-subtitle">Vendas ágeis e eficientes</h4>
+                    <p id="slide-description">Realize vendas em segundos com nosso terminal PDV ultra-rápido, suporte a
+                        gestos touch, fechamento e controle de troco automático.</p>
+
+                    <button class="btn-carousel-action"
+                        onclick="alert('Sistema de controle do portal VELO pronto para uso!')">
+                        <span>Ver Funcionalidade</span>
+                        <i data-lucide="arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Botão Próximo -->
+                <button class="carousel-nav-btn next" onclick="nextSlide()"><i data-lucide="chevron-right"></i></button>
+            </div>
+
+            <!-- Dots de Navegação -->
+            <div class="carousel-dots">
+                <span class="carousel-dot active" onclick="setSlide(0)"></span>
+                <span class="carousel-dot" onclick="setSlide(1)"></span>
+                <span class="carousel-dot" onclick="setSlide(2)"></span>
+                <span class="carousel-dot" onclick="setSlide(3)"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-wrapper">
+        <!-- Sidebar refined -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="brand-area">
+                <div class="brand-icon">
+                    <i data-lucide="printer" stroke-width="3"></i>
+                </div>
+                <h1 class="brand-name">VELO</h1>
+                <button class="sidebar-toggle" onclick="toggleSidebar()"
+                    style="margin-left: auto; background: transparent; border: none; cursor: pointer; color: var(--text-sub); display: flex;">
+                    <i data-lucide="menu"></i>
+                </button>
+            </div>
+
+            <nav class="nav-group">
+                <button class="nav-item active" data-page="home">
+                    <i data-lucide="play-circle"></i>
+                    <span>Iniciar</span>
+                </button>
+                <button class="nav-item" data-page="dashboard">
+                    <i data-lucide="pie-chart"></i>
+                    <span>Dashboard</span>
+                </button>
+
+                <!-- Marketing e Estratégia -->
+                <div class="nav-accordion">
+                    <button class="nav-item accordion-btn" onclick="toggleAccordion(this, 'marketing-menu')">
+                        <i data-lucide="megaphone"></i>
+                        <span style="flex: 1; text-align: left;">Marketing e Estratégia</span>
+                        <i data-lucide="chevron-down" class="accordion-icon" style="width: 16px;"></i>
+                    </button>
+                    <div class="accordion-content" id="marketing-menu">
+                        <button class="nav-item nav-sub" data-page="swot"
+                            style="padding-left: 28px; font-size: 12px;">
+                            <i data-lucide="crosshair" style="width: 14px; margin-right: 8px;"></i>
+                            <span>Matriz SWOT Dinâmica</span>
+                        </button>
+                        <button class="nav-item nav-sub" data-page="actionPlan"
+                            style="padding-left: 28px; font-size: 12px;">
+                            <i data-lucide="check-square" style="width: 14px; margin-right: 8px;"></i>
+                            <span>Plano de Ação</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="nav-accordion">
+                    <button class="nav-item accordion-btn" onclick="toggleAccordion(this, 'cadastros-menu')">
+                        <i data-lucide="users"></i>
+                        <span style="flex: 1; text-align: left;">Cadastros</span>
+                        <i data-lucide="chevron-down" class="accordion-icon" style="width: 16px;"></i>
+                    </button>
+                    <div class="accordion-content" id="cadastros-menu">
+                        <!-- Sub-accordion: Colaboradores -->
+                        <div class="nav-accordion">
+                            <button class="nav-item nav-sub accordion-btn"
+                                onclick="toggleAccordion(this, 'colaboradores-cad-menu')" style="padding-left: 14px;">
+                                <i data-lucide="users-2" style="width: 16px; margin-right: 8px;"></i>
+                                <span style="flex: 1; text-align: left;">Colaboradores</span>
+                                <i data-lucide="chevron-down" class="accordion-icon" style="width: 14px;"></i>
+                            </button>
+                            <div class="accordion-content" id="colaboradores-cad-menu">
+                                <button class="nav-item nav-sub" data-page="users"
+                                    style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="user" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Usuários</span>
+                                </button>
+                                <button class="nav-item nav-sub" data-page="cargos"
+                                    style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="shield-check" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Cargos e Permissões</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Sub-accordion: Financeiro -->
+                        <div class="nav-accordion">
+                            <button class="nav-item nav-sub accordion-btn"
+                                onclick="toggleAccordion(this, 'financeiro-cad-menu')" style="padding-left: 14px;">
+                                <i data-lucide="landmark" style="width: 16px; margin-right: 8px;"></i>
+                                <span style="flex: 1; text-align: left;">Financeiro</span>
+                                <i data-lucide="chevron-down" class="accordion-icon" style="width: 14px;"></i>
+                            </button>
+                            <div class="accordion-content" id="financeiro-cad-menu">
+                                <button class="nav-item nav-sub" data-page="planoConta"
+                                    style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="list-tree" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Plano de Contas</span>
+                                </button>
+                                <button class="nav-item nav-sub" data-page="centroCusto"
+                                    style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="building-2" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Cent. de Custos</span>
+                                </button>
+                                <button class="nav-item nav-sub" data-page="contaFinanceira"
+                                    style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="wallet" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Contas Financeiras</span>
+                                </button>
+                                <button class="nav-item nav-sub" data-page="paymentMethods"
+                                    style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="credit-card" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Formas de Pgto</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-accordion">
+                    <button class="nav-item accordion-btn" onclick="toggleAccordion(this, 'catalogo-menu')">
+                        <i data-lucide="layers"></i>
+                        <span style="flex: 1; text-align: left;">Catálogo</span>
+                        <i data-lucide="chevron-down" class="accordion-icon" style="width: 16px;"></i>
+                    </button>
+                    <div class="accordion-content" id="catalogo-menu">
+                        <button class="nav-item nav-sub" data-page="products">
+                            <i data-lucide="package" style="width: 16px; margin-right: 8px;"></i>
+                            <span>Produtos</span>
+                        </button>
+                        <button class="nav-item nav-sub" data-page="groups">
+                            <i data-lucide="network" style="width: 16px; margin-right: 8px;"></i>
+                            <span>Grupos</span>
+                        </button>
+                        <button class="nav-item nav-sub" data-page="subgroups">
+                            <i data-lucide="palette" style="width: 16px; margin-right: 8px;"></i>
+                            <span>Subgrupos</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="nav-accordion">
+                    <button class="nav-item accordion-btn" onclick="toggleAccordion(this, 'estoque-menu')">
+                        <i data-lucide="box"></i>
+                        <span style="flex: 1; text-align: left;">Estoque</span>
+                        <i data-lucide="chevron-down" class="accordion-icon" style="width: 16px;"></i>
+                    </button>
+                    <div class="accordion-content" id="estoque-menu">
+                        <button class="nav-item nav-sub" data-page="inventory">
+                            <i data-lucide="clipboard-list" style="width: 16px; margin-right: 8px;"></i>
+                            <span>Inventário</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="nav-accordion">
+                    <button class="nav-item accordion-btn" onclick="toggleAccordion(this, 'fin-menu')">
+                        <i data-lucide="landmark"></i>
+                        <span style="flex: 1; text-align: left;">Financeiro</span>
+                        <i data-lucide="chevron-down" class="accordion-icon" style="width: 16px;"></i>
+                    </button>
+                    <div class="accordion-content" id="fin-menu">
+                        <button class="nav-item nav-sub" data-page="conciliacaoCaixa">
+                            <i data-lucide="scale" style="width: 16px; margin-right: 8px;"></i>
+                            <span>Conciliação de Caixa</span>
+                        </button>
+                        <button class="nav-item nav-sub" data-page="receitas">
+                            <i data-lucide="trending-up" style="width: 16px; margin-right: 8px;"></i>
+                            <span>Receitas</span>
+                        </button>
+                        <button class="nav-item nav-sub" data-page="despesas">
+                            <i data-lucide="trending-down" style="width: 16px; margin-right: 8px;"></i>
+                            <span>Despesas</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="nav-accordion">
+                    <button class="nav-item accordion-btn" onclick="toggleAccordion(this, 'relatorios-menu')">
+                        <i data-lucide="bar-chart-2"></i>
+                        <span style="flex: 1; text-align: left;">Relatórios</span>
+                        <i data-lucide="chevron-down" class="accordion-icon" style="width: 16px;"></i>
+                    </button>
+                    <div class="accordion-content" id="relatorios-menu">
+                        <!-- Sub-accordion: Vendas -->
+                        <div class="nav-accordion">
+                            <button class="nav-item nav-sub accordion-btn"
+                                onclick="toggleAccordion(this, 'relatorios-vendas-menu')" style="padding-left: 14px;">
+                                <i data-lucide="shopping-bag" style="width: 16px; margin-right: 8px;"></i>
+                                <span style="flex: 1; text-align: left;">Vendas</span>
+                                <i data-lucide="chevron-down" class="accordion-icon" style="width: 14px;"></i>
+                            </button>
+                            <div class="accordion-content" id="relatorios-vendas-menu">
+                                <button class="nav-item nav-sub" data-page="reportSalesByProduct" style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="line-chart" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Vendas por Produto</span>
+                                </button>
+                                <button class="nav-item nav-sub" data-page="reportSalesByTerminal" style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="monitor" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Vendas por Caixa</span>
+                                </button>
+                                <button class="nav-item nav-sub" data-page="reportSangrias" style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="arrow-down-circle" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Sangrias (Retiradas)</span>
+                                </button>
+                                <button class="nav-item nav-sub" data-page="reportFechamento" style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="lock" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Fechamento de Caixa</span>
+                                </button>
+                                <button class="nav-item nav-sub" data-page="reportSalesByPeriod" style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="calendar" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Vendas por Período</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Sub-accordion: Financeiro -->
+                        <div class="nav-accordion">
+                            <button class="nav-item nav-sub accordion-btn"
+                                onclick="toggleAccordion(this, 'relatorios-financeiro-menu')" style="padding-left: 14px;">
+                                <i data-lucide="landmark" style="width: 16px; margin-right: 8px;"></i>
+                                <span style="flex: 1; text-align: left;">Financeiro</span>
+                                <i data-lucide="chevron-down" class="accordion-icon" style="width: 14px;"></i>
+                            </button>
+                            <div class="accordion-content" id="relatorios-financeiro-menu">
+                                <button class="nav-item nav-sub" data-page="reportDrePersonalizada" style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="file-text" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>DRE Personalizada</span>
+                                </button>
+                                <button class="nav-item nav-sub" data-page="reportFluxoCaixa" style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="trending-up" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Fluxo de Caixa</span>
+                                </button>
+                                <button class="nav-item nav-sub" data-page="reportPontoEquilibrio" style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="scale" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Ponto de Equilíbrio</span>
+                                </button>
+                                <button class="nav-item nav-sub" data-page="reportDreGerencial" style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="file-spreadsheet" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>DRE Gerencial</span>
+                                </button>
+                                <button class="nav-item nav-sub" data-page="reportBalancoPatrimonial" style="padding-left: 28px; font-size: 12px;">
+                                    <i data-lucide="book-open" style="width: 14px; margin-right: 8px;"></i>
+                                    <span>Balanço Patrimonial</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-accordion">
+                    <button class="nav-item accordion-btn" onclick="toggleAccordion(this, 'rh-menu')">
+                        <i data-lucide="shield-check"></i>
+                        <span style="flex: 1; text-align: left;">RH</span>
+                        <i data-lucide="chevron-down" class="accordion-icon" style="width: 16px;"></i>
+                    </button>
+                    <div class="accordion-content" id="rh-menu">
+                        <button class="nav-item nav-sub" data-page="compliance" style="padding-left: 28px; font-size: 12px;">
+                            <i data-lucide="alert-octagon" style="width: 14px; margin-right: 8px;"></i>
+                            <span>Compliance</span>
+                        </button>
+                        <button class="nav-item nav-sub" data-page="skills" style="padding-left: 28px; font-size: 12px;">
+                            <i data-lucide="award" style="width: 14px; margin-right: 8px;"></i>
+                            <span>Gestão de Skills</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="sidebar-label-group" style="margin-top: 16px; margin-bottom: 4px;">
+                    <span
+                        style="font-size: 11px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; padding-left: 12px;">Gestão</span>
+                </div>
+                <div class="nav-accordion">
+                    <button class="nav-item accordion-btn" onclick="toggleAccordion(this, 'ajustes-menu')">
+                        <i data-lucide="settings"></i>
+                        <span style="flex: 1; text-align: left;">Ajustes</span>
+                        <i data-lucide="chevron-down" class="accordion-icon" style="width: 16px;"></i>
+                    </button>
+                    <div class="accordion-content" id="ajustes-menu">
+                        <button class="nav-item nav-sub" data-page="terminals">
+                            <i data-lucide="monitor" style="width: 16px; margin-right: 8px;"></i>
+                            <span>Terminais de Caixa</span>
+                        </button>
+                        <button class="nav-item nav-sub" data-page="printers">
+                            <i data-lucide="printer" style="width: 16px; margin-right: 8px;"></i>
+                            <span>Impressoras</span>
+                        </button>
+                        <button class="nav-item nav-sub" data-page="ticketConfig">
+                            <i data-lucide="receipt" style="width: 16px; margin-right: 8px;"></i>
+                            <span>Configuração do Ticket</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Sistema -->
+                <button class="accordion-btn" onclick="toggleAccordion(this, 'menu-sistema')">
+                    <i data-lucide="settings"></i>
+                    <span>Sistema</span>
+                    <i data-lucide="chevron-down" class="chevron"></i>
+                </button>
+                <div class="accordion-content" id="menu-sistema">
+                    <button class="nav-item sub" data-page="backup">
+                        <i data-lucide="database"></i>
+                        <span>Backup de Dados</span>
+                    </button>
+                    <button class="nav-item sub" data-page="version-control">
+                        <i data-lucide="git-branch"></i>
+                        <span>Controle de Versão</span>
+                    </button>
+                </div>
+            </nav>
+
+            <div class="sidebar-bottom" style="margin-top:auto; padding:12px; background:var(--accent); border:1px solid var(--border-soft); border-radius:12px; display:flex; align-items:center; gap:12px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.05);">
+                <div class="user-avatar" style="width:38px; height:38px; border-radius:50%; background-image:url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'); background-size:cover; background-position:center; border:2px solid var(--surface); box-shadow:0 2px 5px rgba(0,0,0,0.12);"></div>
+                <div style="flex: 1">
+                    <p style="font-size: 13px; font-weight: 900; color:var(--text-main); font-family:'Plus Jakarta Sans', sans-serif;">Modo Gestor</p>
+                    <p style="font-size: 11px; color: var(--text-sub); font-family:monospace; margin-top:2px;">Online | v<span id="sidebar-version-label">1.0.0</span></p>
+                </div>
+                <!-- Interruptor físico tátil tridimensional de luxo -->
+                <button onclick="handleLogout()"
+                    style="width: 38px; height: 38px; background: linear-gradient(135deg, #eae8e3 0%, #dcdad3 100%); border: 1.5px solid #c8c6be; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); outline: none; position: relative;"
+                    title="Sair do Portal"
+                    onmousedown="this.style.transform='translateY(1px)'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.1), inset 0 2px 4px rgba(0,0,0,0.08)';"
+                    onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)';">
+                    <i data-lucide="power" style="width: 15px; color: var(--danger); filter: drop-shadow(0 1px 0px rgba(255,255,255,0.8));"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Stage -->
+        <main class="main-stage">
+            <header class="header-bar">
+                <div class="header-left" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <button class="mobile-toggle" onclick="toggleSidebarMobile()"><i data-lucide="menu"></i></button>
+                    <h2 class="page-title" id="page-title">Dashboard</h2>
+
+                    <!-- Botão Seletor Multiloja (GELIC-Active Only) -->
+                    <button class="header-store-selector-btn" id="btn-header-store-selector"
+                        onclick="openStoreSelectorPortal()" title="Alternar Loja / Filial">
+                        <i data-lucide="store" style="width: 15px; height: 15px; color: var(--brand);"></i>
+                        <span id="header-active-store-name">Carregando Loja...</span>
+                        <i data-lucide="chevron-down" style="width: 13px; height: 13px; opacity: 0.7;"></i>
+                    </button>
+                </div>
+                <div class="header-right" style="display: flex; align-items: center; gap: 16px;">
+                    <!-- Botão de Sincronização/Atualização de Dados (Flat & Professional) -->
+                    <button class="header-action-btn" id="btn-sync-server" onclick="triggerManualSync()"
+                        title="Atualizar/Sincronizar Dados">
+                        <i data-lucide="refresh-cw"></i>
+                    </button>
+
+                    <!-- Botão de Alternância de Tema Direta (Flat & Professional) -->
+                    <button class="header-action-btn" id="btn-toggle-theme" onclick="toggleThemeDirect()"
+                        title="Alternar Tema (Escuro/Claro)">
+                        <i data-lucide="moon" id="theme-active-icon"></i>
+                    </button>
+                    <div style="width: 1px; height: 32px; background: var(--border-med)"></div>
+                    <div id="live-clock" style="font-weight: 700; color: var(--brand); width: 80px"></div>
+                </div>
+            </header>
+
+            <div class="content-scroll" id="content-area">
+                <!-- Content injected by app.js -->
+            </div>
+        </main>
+        <div class="mobile-overlay" onclick="toggleSidebarMobile()"></div>
+    </div>
+
+    <!-- Hidden Printer Template (Epson TM-T20 High Fidelity) -->
+    <div id="print-template">
+        <div class="ticket-header">
+            <p style="font-weight: 900; font-size: 22px; margin-bottom: 2px;">TICKET 1-A-1</p>
+            <p style="font-size: 12px; font-weight: bold;">UNIDADE CENTRO - PDV 01</p>
+            <p style="font-size: 10px; margin-top: 4px;" id="print-time"></p>
+        </div>
+        <div class="ticket-body">
+            <p style="font-size: 12px; margin-bottom: 5px;">ITEM PARA RETIRADA:</p>
+            <p style="font-weight: 900; font-size: 32px; text-transform: uppercase; margin: 5px 0;" id="print-product">
+            </p>
+        </div>
+        <div class="ticket-footer">
+            <p
+                style="font-weight: 900; font-size: 16px; margin-bottom: 4px; border-bottom: 1px solid black; padding-bottom: 2px;">
+                RETIRAR NO BALCÃO</p>
+            <p style="font-size: 10px; margin-top: 5px;">Obrigado pela preferência!</p>
+            <p style="font-size: 9px; margin-top: 10px; opacity: 0.7;">--------------------------------</p>
+        </div>
+    </div>
+
+    <!-- Product Form Modal -->
+    <div id="product-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <h3 id="product-modal-title">Editar Registro</h3>
+                    <div id="product-icon-wrapper" style="position: relative; display: none;">
+                        <button type="button" onclick="toggleIconDropdown(event)"
+                            style="display: flex; align-items: center; gap: 8px; background: var(--surface-light); border: 1px solid var(--border-med); padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text-sub);">
+                            <span id="product-icon-preview" style="display:flex;"><i data-lucide="package"
+                                    style="width: 14px;"></i></span>
+                            <span id="product-icon-name" style="text-transform: capitalize;">Package</span>
+                            <i data-lucide="chevron-down" style="width: 14px;"></i>
+                        </button>
+                        <div id="icon-dropdown-menu"
+                            style="display: none; position: absolute; top: 100%; left: 0; background: white; border: 1px solid var(--border-med); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; width: 180px; max-height: 250px; overflow-y: auto; margin-top: 4px; padding: 4px 0;">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeProductModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body" id="product-form-body">
+                <!-- Form injected via JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeProductModal()">Cancelar</button>
+                <button class="btn-save" onclick="saveProductForm()">Gravar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; background: #fbfbfd; color: #1a1a1e;">
+            <div class="modal-header">
+                <h3 style="display: flex; align-items: center; gap: 8px;"><i data-lucide="printer"></i> Pré-visualização
+                    do Cupom</h3>
+                <button class="close-btn" onclick="closePreviewModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body"
+                style="background: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 32px 16px;">
+                <div id="preview-paper"
+                    style="background: white; width: 340px; min-height: 400px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; font-family: 'Courier New', Courier, monospace; color: black; display: flex; flex-direction: column; align-items: stretch; overflow: hidden;">
+                    <!-- content injected by js -->
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: space-between; background: white;">
+                <button class="btn-cancel" onclick="closePreviewModal()"
+                    style="border: none; background: transparent; font-weight: 600;">Fechar</button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-cancel" onclick="alert('Funcionalidade em desenvolvimento')"
+                        style="border: none; background: transparent; font-weight: 600;">Copiar</button>
+                    <button class="btn-cancel" onclick="alert('Funcionalidade em desenvolvimento')"
+                        style="border: none; background: transparent; font-weight: 600;">Baixar</button>
+                    <button class="btn-save" onclick="executePrint()"
+                        style="display: flex; align-items: center; gap: 8px; background: #5a67d8;"><i
+                            data-lucide="printer" style="width: 16px;"></i> Imprimir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Store Selector Modal (GELIC-Active Multiloja) -->
+    <div id="store-selector-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 440px; width: 90%; padding: 0; overflow: hidden;">
+            <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid var(--border-soft);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="store" style="width: 16px; height: 16px; color: var(--brand);"></i>
+                    <h3 style="font-size: 14px; font-weight: 700; letter-spacing: -0.01em;">Selecionar Filial</h3>
+                </div>
+                <button class="close-btn" onclick="closeStoreSelectorPortal()"><i data-lucide="x"></i></button>
+            </div>
+            <div id="portal-stores-list-container" class="portal-stores-list">
+                <!-- Injetado dinamicamente via JS -->
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="app.js"></script>
+    <script src="precificacao.js"></script>
+    <script>
+        // Update Live Clock
+        setInterval(() => {
+            const now = new Date();
+            const clockEl = document.getElementById('live-clock');
+            if (clockEl) {
+                clockEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+        }, 1000);
+
+        // --- CAROUSEL LOGIC ---
+        const slides = [
+            {
+                title: "Frente de Caixa",
+                subtitle: "Vendas ágeis e eficientes",
+                description: "Realize vendas em segundos com nosso terminal PDV ultra-rápido, suporte a gestos touch, fechamento e controle de troco automático.",
+                icon: "monitor"
+            },
+            {
+                title: "Relatórios Inteligentes",
+                subtitle: "Tome decisões baseadas em dados",
+                description: "Acompanhe seus fechamentos de caixa, vendas por período, faturamento por produto e retire sangrias com total transparência e segurança.",
+                icon: "bar-chart-2"
+            },
+            {
+                title: "Gestão de Impressoras",
+                subtitle: "Automação e controle total",
+                description: "Cadastre e configure impressoras térmicas locais ou em rede por terminal ou produto, automatizando a divisão de cupons por setor.",
+                icon: "printer"
+            },
+            {
+                title: "Segurança de Dados",
+                subtitle: "Seus dados sempre protegidos",
+                description: "Sincronização instantânea das vendas locais para a nuvem com backups manuais e exportações automáticas sempre que você desejar.",
+                icon: "shield"
+            }
+        ];
+
+        let currentSlide = 0;
+        let carouselInterval = null;
+
+        window.setSlide = function (idx) {
+            currentSlide = idx;
+            const slide = slides[idx];
+
+            // Content
+            document.getElementById('slide-title').innerText = slide.title;
+            document.getElementById('slide-subtitle').innerText = slide.subtitle;
+            document.getElementById('slide-description').innerText = slide.description;
+
+            // Icon
+            const iconBadge = document.querySelector('.carousel-icon-badge');
+            if (iconBadge) {
+                iconBadge.innerHTML = `<i id="slide-icon" data-lucide="${slide.icon}"></i>`;
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Tabs
+            const tabs = document.querySelectorAll('.carousel-tab-btn');
+            tabs.forEach((tab, i) => {
+                tab.classList.toggle('active', i === idx);
+            });
+
+            // Dots
+            const dots = document.querySelectorAll('.carousel-dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === idx);
+            });
+
+            // Reset autoplay timer when user interacts
+            resetAutoplay();
+        };
+
+        window.nextSlide = function () {
+            setSlide((currentSlide + 1) % slides.length);
+        };
+
+        window.prevSlide = function () {
+            setSlide((currentSlide - 1 + slides.length) % slides.length);
+        };
+
+        function startAutoplay() {
+            carouselInterval = setInterval(nextSlide, 6000);
+        }
+
+        function resetAutoplay() {
+            if (carouselInterval) clearInterval(carouselInterval);
+            startAutoplay();
+        }
+
+        // --- LOGIN LOGIC ---
+        window.handleLogin = function (event) {
+            event.preventDefault();
+            const usernameInput = document.getElementById('login-username');
+            const passwordInput = document.getElementById('login-password');
+            const errorMsg = document.getElementById('login-error-msg');
+
+            const username = usernameInput.value.trim().toUpperCase();
+            const password = passwordInput.value;
+
+            // Database-driven auth with safe local defaults
+            const isWagner = username === 'WAGNER' && password === 'Lu@123';
+            const isAdmin = username === 'ADMIN' && password === '123';
+
+            // Check state.users array from db
+            const isDbUser = typeof state !== 'undefined' && state && Array.isArray(state.users) && state.users.some(u =>
+                u.username.toUpperCase() === username && u.password === password
+            );
+
+            if (isWagner || isAdmin || isDbUser) {
+                // Success
+                localStorage.setItem('velo_portal_logged_in', 'true');
+                document.body.classList.add('authenticated');
+
+                // Hide error and reset fields
+                errorMsg.classList.add('hidden');
+
+                // Re-sync and init
+                if (typeof syncFromServer === 'function') {
+                    syncFromServer();
+                }
+            } else {
+                // Failure
+                errorMsg.classList.remove('hidden');
+            }
+        };
+
+        window.toggleLoginPassword = function () {
+            const passwordInput = document.getElementById('login-password');
+            const passIcon = document.getElementById('toggle-pass-icon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                passwordInput.type = 'password';
+                passIcon.setAttribute('data-lucide', 'eye');
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        window.forgotPassword = function (event) {
+            event.preventDefault();
+            alert('Para redefinir sua senha, entre em contato com o administrador do sistema.');
+        };
+
+        window.handleLogout = function () {
+            localStorage.removeItem('velo_portal_logged_in');
+            document.body.classList.remove('authenticated');
+
+            const usernameInput = document.getElementById('login-username');
+            const passwordInput = document.getElementById('login-password');
+            if (usernameInput) usernameInput.value = '';
+            if (passwordInput) passwordInput.value = '';
+
+            const errorMsg = document.getElementById('login-error-msg');
+            if (errorMsg) errorMsg.classList.add('hidden');
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        // Initialize Carousel on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setSlide(0);
+            startAutoplay();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VELO | CAIXA </title>
+    
+    <!-- PWA & Mobile Optimization -->
+    <meta name="theme-color" content="#0b0f19">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VELO PDV">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="manifest" href="manifest.json">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- PWA Smart Installer Script -->
+    <script>
+        let deferredPrompt;
+
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker do PDV registrado:', reg.scope))
+                    .catch(err => console.error('Erro ao registrar Service Worker do PDV:', err));
+            });
+        }
+
+        // Intercepta prompt nativo de instalação
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('beforeinstallprompt do PDV disparado. Pronto para instalação direta.');
+            // showInstallBanner(); // Desativado a pedido do usuário
+        });
+
+        function showInstallBanner() {
+            return; // Desativado a pedido do usuário
+            if (window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone === true) {
+                return;
+            }
+            const banner = document.getElementById('pwa-install-banner');
+            if (banner) {
+                banner.classList.add('show');
+            }
+        }
+
+        function hideInstallBanner() {
+            const banner = document.getElementById('pwa-install-banner');
+            if (banner) {
+                banner.classList.remove('show');
+            }
+        }
+
+        window.dismissInstallBanner = function() {
+            hideInstallBanner();
+            sessionStorage.setItem('pwa_banner_dismissed', 'true');
+        };
+
+        window.triggerPWAInstall = function() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuário instalou o PWA do PDV.');
+                    }
+                    deferredPrompt = null;
+                    hideInstallBanner();
+                });
+            } else {
+                showInstructionsModal();
+            }
+        };
+
+        window.showInstructionsModal = function() {
+            const modal = document.getElementById('pwa-instructions-modal');
+            if (modal) {
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const step2Text = document.getElementById('pwa-step-2-text');
+                const step3Text = document.getElementById('pwa-step-3-text');
+                
+                if (isIOS) {
+                    if (step2Text) step2Text.innerHTML = 'No seu iPhone/iPad, abra o **Safari**, acesse o endereço e toque no botão **Compartilhar** (ícone quadrado com seta para cima) na barra inferior.';
+                    if (step3Text) step3Text.innerHTML = 'Deslize a lista de opções e toque em **Adicionar à Tela de Início** para instalar o VELO PDV em tela cheia.';
+                }
+                
+                modal.classList.add('show');
+            }
+        };
+
+        window.hideInstructionsModal = function() {
+            const modal = document.getElementById('pwa-instructions-modal');
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        };
+
+        // Mostrar banner automaticamente após 1.5s
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+                const dismissed = sessionStorage.getItem('pwa_banner_dismissed') === 'true';
+                if (!isStandalone && !dismissed) {
+                    // showInstallBanner(); // Desativado a pedido do usuário
+                }
+            }, 1500);
+        });
+    </script>
+</head>
+
+<body>
+    <!-- PWA Install Banner & Modal -->
+    <div id="pwa-install-banner" class="pwa-install-banner" style="display: none !important;">
+        <div class="pwa-install-info">
+            <div class="pwa-install-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+            </div>
+            <div class="pwa-install-text">
+                <h3>VELO Caixa PDV</h3>
+                <p>Instale para usar em tela cheia e ter máxima agilidade</p>
+            </div>
+        </div>
+        <div class="pwa-install-actions">
+            <button class="pwa-install-btn" onclick="triggerPWAInstall()">INSTALAR</button>
+            <button class="pwa-install-close" onclick="dismissInstallBanner()">✕</button>
+        </div>
+    </div>
+
+    <div id="pwa-instructions-modal" class="pwa-modal-overlay">
+        <div class="pwa-modal-card">
+            <div class="pwa-modal-header">
+                <h2>Como Instalar o VELO PDV</h2>
+                <button class="pwa-install-close" style="padding: 2px;" onclick="hideInstructionsModal()">✕</button>
+            </div>
+            <div class="pwa-modal-steps">
+                <div class="pwa-modal-step">
+                    <div class="pwa-modal-step-number">1</div>
+                    <div class="pwa-modal-step-text" id="pwa-step-1-text">
+                        Para a instalação automática nativa, acesse o sistema a partir de um servidor seguro **HTTPS** ou diretamente via **localhost**.
+                    </div>
+                </div>
+                <div class="pwa-modal-step">
+                    <div class="pwa-modal-step-number">2</div>
+                    <div class="pwa-modal-step-text" id="pwa-step-2-text">
+                        <strong>No Android/Chrome</strong>: Toque no menu do navegador (três pontinhos no canto superior direito) e escolha **Instalar aplicativo** ou **Adicionar à tela inicial**.
+                    </div>
+                </div>
+                <div class="pwa-modal-step">
+                    <div class="pwa-modal-step-number">3</div>
+                    <div class="pwa-modal-step-text" id="pwa-step-3-text">
+                        <strong>No iPhone/Safari</strong>: Toque no botão **Compartilhar** (ícone quadrado com seta para cima) na barra de navegação e selecione **Adicionar à Tela de Início**.
+                    </div>
+                </div>
+            </div>
+            <div class="pwa-modal-footer">
+                <button class="pwa-modal-btn-entendi" onclick="hideInstructionsModal()">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     TELA DE LOGIN
+═══════════════════════════════════════════════════════ -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-card">
+
+            <!-- Logo / Brand -->
+            <div class="login-header-slim">
+                <div class="login-logo-slim">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                        <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
+                </div>
+                <h2><strong>VELO</strong> | PDV</h2>
+                <p>Acesso ao Terminal</p>
+                <span
+                    style="font-size: 11px; color: var(--text-sub); opacity: 0.6; display: block; margin-top: 4px;">v<span
+                        id="login-version-label">1.0.0</span></span>
+            </div>
+
+            <div class="login-body-slim">
+
+                <!-- Operador -->
+                <div class="form-group-slim">
+                    <div class="input-wrap-slim">
+                        <svg class="input-icon-svg" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <input type="text" id="login-operator" placeholder="Operador" autocomplete="off"
+                            autocorrect="off" autocapitalize="none" spellcheck="false"
+                            onkeydown="if(event.key==='Enter') doLogin()">
+                    </div>
+                </div>
+
+                <!-- Senha -->
+                <div class="form-group-slim">
+                    <div class="input-wrap-slim">
+                        <svg class="input-icon-svg" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <input type="password" id="login-password" placeholder="Senha" autocomplete="off"
+                            autocorrect="off" autocapitalize="none" spellcheck="false"
+                            onkeydown="if(event.key==='Enter') doLogin()">
+                    </div>
+                </div>
+
+                <!-- Terminal + Servidor -->
+                <div class="form-row-slim">
+                    <div class="form-group-slim">
+                        <div class="input-wrap-slim">
+                            <svg class="input-icon-svg" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                            <input type="text" id="login-terminal" placeholder="Terminal (ex: CX001)" autocomplete="off"
+                                autocorrect="off" autocapitalize="none" spellcheck="false">
+                        </div>
+                    </div>
+                    <div class="form-group-slim">
+                        <div class="input-wrap-slim">
+                            <svg class="input-icon-svg" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                            </svg>
+                            <input type="text" id="login-server" placeholder="Servidor" autocomplete="off"
+                                autocorrect="off" autocapitalize="none" spellcheck="false">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-acessar" id="btn-acessar" onclick="doLogin()">
+                    ACESSAR CAIXA
+                </button>
+
+                <button class="btn-sincronizar" onclick="doSyncLogin()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    Sincronizar
+                </button>
+
+                <p id="login-msg" class="login-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     PDV PRINCIPAL
+═══════════════════════════════════════════════════════ -->
+    <div id="pdv-screen" class="pdv-screen hidden">
+
+        <!-- HEADER -->
+        <header class="pdv-header">
+            <div class="pdv-header-left">
+                <span id="hdr-terminal">PDV</span>
+                <span style="opacity:.4">|</span>
+                <span id="hdr-operator" class="hdr-operator-name">—</span>
+                <span style="opacity:.4">|</span>
+                <span
+                    style="font-size: 11px; font-weight: 700; opacity: 0.6; background: rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; color: white;">v<span
+                        id="hdr-version-label">1.0.0</span></span>
+            </div>
+            <div class="pdv-header-right">
+                <div id="pdv-clock" class="pdv-clock">00:00</div>
+                <button class="btn-reimprimir-hdr" onclick="abrirReimpressao()" title="Reimpressão">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9" />
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                        <rect x="6" y="14" width="12" height="8" />
+                    </svg>
+                </button>
+                <button class="btn-menu-hdr" onclick="abrirMenuOpcoes()" title="Mais opções">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="5" r="1" fill="currentColor" />
+                        <circle cx="12" cy="12" r="1" fill="currentColor" />
+                        <circle cx="12" cy="19" r="1" fill="currentColor" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- BODY -->
+        <div class="pdv-body">
+
+            <!-- ── COLUNA ESQUERDA: Carrinho + Numpad ─────────────── -->
+            <div class="pdv-left">
+
+                <!-- Barra resumo rápido -->
+                <div class="order-bar">
+                    <div class="order-bar-left">
+                        <span id="order-count-label">VENDA ATUAL: 0 Item(s)</span>
+                    </div>
+                    <div class="order-bar-right">
+                        <button class="btn-abrir-itens" onclick="abrirItens()" title="Ver produtos">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7" />
+                                <rect x="14" y="3" width="7" height="7" />
+                                <rect x="14" y="14" width="7" height="7" />
+                                <rect x="3" y="14" width="7" height="7" />
+                            </svg>
+                            ITENS
+                        </button>
+                        <span id="order-total-label" class="order-total-val">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- Busca -->
+                <div class="search-wrap">
+                    <span class="search-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                    </span>
+                    <input type="text" id="search-input" placeholder="Pesquisar item..."
+                        oninput="filterProducts(this.value)">
+                    <button class="search-clear" onclick="clearSearch()">✕</button>
+                </div>
+
+                <!-- Lista do carrinho -->
+                <div class="cart-list" id="cart-list">
+                    <div class="cart-empty" id="cart-empty">
+                        <i data-lucide="shopping-cart" style="width: 36px; height: 36px; opacity: 0.3; margin-bottom: 8px;"></i>
+                        <p>Carrinho vazio</p>
+                    </div>
+                </div>
+
+                <!-- Numpad -->
+                <div class="numpad-section">
+                    <div class="numpad-display" id="numpad-display">
+                        <span class="numpad-label">Qtd / Valor</span>
+                        <span id="numpad-value">—</span>
+                    </div>
+                    <div class="numpad-grid">
+                        <button onclick="np('1')">1</button>
+                        <button onclick="np('2')">2</button>
+                        <button onclick="np('3')">3</button>
+                        <button onclick="np('4')">4</button>
+                        <button onclick="np('5')">5</button>
+                        <button onclick="np('6')">6</button>
+                        <button onclick="np('7')">7</button>
+                        <button onclick="np('8')">8</button>
+                        <button onclick="np('9')">9</button>
+                        <button onclick="np('.')">.</button>
+                        <button onclick="np('0')">0</button>
+                        <button class="np-del" onclick="np('DEL')">⌫</button>
+                    </div>
+                </div>
+
+                <!-- Resumo -->
+                <div class="cart-resumo">
+                    <div class="resumo-row">
+                        <span>Subtotal</span>
+                        <span id="r-subtotal">R$ 0,00</span>
+                    </div>
+                    <div class="resumo-row resumo-total-row">
+                        <span>Total a Pagar</span>
+                        <span id="r-total">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- Ações -->
+                <div class="cart-actions-row">
+                    <button class="btn-nova" onclick="novaVenda()">NOVA VENDA</button>
+                    <button class="btn-cancel" onclick="cancelarItem()">CANCELAR</button>
+                </div>
+                <button class="btn-pagamento" id="btn-pagamento" onclick="abrirPagamento()">
+                    PAGAMENTO
+                </button>
+            </div>
+
+            <!-- ── COLUNA DIREITA: Produtos ─────────────────────────── -->
+            <div class="pdv-right">
+                <!-- Abas de subgrupo -->
+                <div class="subgroup-tabs" id="subgroup-tabs"></div>
+
+                <!-- Grid de produtos -->
+                <div class="product-grid" id="product-grid">
+                    <div class="loading-products">Carregando produtos...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     MODAL DE PAGAMENTO
+═══════════════════════════════════════════════════════ -->
+    <div id="payment-modal" class="modal-overlay hidden">
+        <div class="payment-card">
+            <div class="payment-card-header">
+                <h2>PAGAMENTO</h2>
+                <div class="payment-big-total" id="pay-big-total">R$ 0,00</div>
+            </div>
+
+            <div class="payment-card-body">
+
+                <div class="payment-layout-grid">
+
+                    <!-- Coluna Esquerda: Teclado + Sugestões + Métodos -->
+                    <div class="payment-left-col">
+                        <div class="pay-numpad-container" style="display: flex; gap: 16px; align-items: stretch;">
+
+                            <!-- Teclado para fracionar -->
+                            <div class="pay-numpad-area"
+                                style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                                <div class="sup-display" style="margin-bottom: 0; padding: 10px 14px;">
+                                    <span class="sup-label">Valor Recebido</span>
+                                    <span id="pay-numpad-value">—</span>
+                                </div>
+                                <div class="sup-numpad" style="margin-bottom: 0; gap: 6px;">
+                                    <button onclick="npPay('1')">1</button><button
+                                        onclick="npPay('2')">2</button><button onclick="npPay('3')">3</button>
+                                    <button onclick="npPay('4')">4</button><button
+                                        onclick="npPay('5')">5</button><button onclick="npPay('6')">6</button>
+                                    <button onclick="npPay('7')">7</button><button
+                                        onclick="npPay('8')">8</button><button onclick="npPay('9')">9</button>
+                                    <button onclick="npPay('0')">0</button><button
+                                        onclick="npPay('00')">00</button><button class="sup-del"
+                                        onclick="npPay('del')"><i data-lucide="delete"></i></button>
+                                </div>
+
+                                <!-- Sugestões de Valores / Troco Rápido -->
+                                <div class="fast-cash-container"
+                                    style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;">
+                                    <button type="button" class="fast-cash-btn" onclick="setFastCash(5)">R$ 5</button>
+                                    <button type="button" class="fast-cash-btn" onclick="setFastCash(10)">R$ 10</button>
+                                    <button type="button" class="fast-cash-btn" onclick="setFastCash(20)">R$ 20</button>
+                                    <button type="button" class="fast-cash-btn" onclick="setFastCash(50)">R$ 50</button>
+                                    <button type="button" class="fast-cash-btn" onclick="setFastCash(100)">R$
+                                        100</button>
+                                    <button type="button" class="fast-cash-btn fast-cash-exact"
+                                        onclick="setFastCash('exact')" style="flex-grow: 1;">Exato</button>
+                                </div>
+                            </div>
+
+                            <!-- Métodos de pagamento -->
+                            <div style="flex: 1; display: flex; flex-direction: column;">
+                                <div class="pay-methods-grid" id="pay-methods-grid"></div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Coluna Direita: Status de Pagamento + Recibos Aplicados -->
+                    <div class="payment-right-col" style="display: flex; flex-direction: column; gap: 12px;">
+
+                        <!-- Status -->
+                        <div class="pay-status">
+                            <div class="pay-row">
+                                <span>Total da Venda</span>
+                                <span id="ps-total">R$ 0,00</span>
+                            </div>
+                            <div class="pay-row pay-row-paid">
+                                <span>Valor Pago</span>
+                                <span id="ps-paid">R$ 0,00</span>
+                            </div>
+                            <div class="pay-row pay-row-balance" id="pr-balance">
+                                <span>Falta Pagar</span>
+                                <span id="ps-balance">R$ 0,00</span>
+                            </div>
+                            <div class="pay-row pay-row-change hidden" id="pr-change">
+                                <span>Troco</span>
+                                <span id="ps-change">R$ 0,00</span>
+                            </div>
+                        </div>
+
+                        <!-- Recibos adicionados -->
+                        <div id="pay-applied" class="pay-applied"></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="payment-card-footer">
+                <button class="btn-voltar" onclick="fecharPagamento()">← Voltar</button>
+                <button class="btn-finalizar hidden" id="btn-finalizar" onclick="finalizarVenda()">
+                    FINALIZAR VENDA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     MODAL SANGRIA
+═══════════════════════════════════════════════════════ -->
+    <div id="sangria-modal" class="modal-overlay hidden">
+        <div class="sangria-card">
+            <!-- Header -->
+            <div class="sangria-header">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <i data-lucide="wallet" style="width: 20px;"></i>
+                    <h3>Sangria de Caixa</h3>
+                </div>
+                <button class="btn-close-ticket" onclick="fecharSangria()">
+                    <i data-lucide="x" style="width: 18px;"></i>
+                </button>
+            </div>
+
+            <!-- Formulário -->
+            <div id="sangria-form" class="sangria-body">
+                <div class="sangria-display">
+                    <span class="sup-label">VALOR DA SANGRIA</span>
+                    <span id="sangria-value">R$ 0,00</span>
+                </div>
+                <!-- Numpad -->
+                <div class="sup-numpad" style="margin-bottom:16px;">
+                    <button onclick="sangriaNumpad('1')">1</button>
+                    <button onclick="sangriaNumpad('2')">2</button>
+                    <button onclick="sangriaNumpad('3')">3</button>
+                    <button onclick="sangriaNumpad('4')">4</button>
+                    <button onclick="sangriaNumpad('5')">5</button>
+                    <button onclick="sangriaNumpad('6')">6</button>
+                    <button onclick="sangriaNumpad('7')">7</button>
+                    <button onclick="sangriaNumpad('8')">8</button>
+                    <button onclick="sangriaNumpad('9')">9</button>
+                    <button onclick="sangriaNumpad('00')">00</button>
+                    <button onclick="sangriaNumpad('0')">0</button>
+                    <button class="sup-del" onclick="sangriaNumpad('DEL')">
+                        <i data-lucide="delete" style="width: 18px;"></i>
+                    </button>
+                </div>
+                <!-- Motivo -->
+                <div class="sangria-motivo-wrap">
+                    <label class="sangria-motivo-label">Motivo</label>
+                    <input type="text" id="sangria-motivo" class="sangria-motivo-input"
+                        placeholder="Ex: Troco para caixa, pagamento de fornecedor...">
+                </div>
+                <!-- Botões -->
+                <div class="sangria-actions">
+                    <button class="btn-pular" onclick="fecharSangria()">Cancelar</button>
+                    <button class="btn-abrir-cx" onclick="confirmarSangria()">
+                        <i data-lucide="check" style="width: 16px;"></i>
+                        Registrar Sangria
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pré-visualização do comprovante -->
+            <div id="sangria-preview" class="sangria-body hidden">
+                <div class="ticket-paper-wrap">
+                    <div id="sangria-paper" class="ticket-paper"></div>
+                </div>
+                <div class="sangria-actions" style="margin-top:12px;">
+                    <button class="btn-fechar-ticket" onclick="fecharSangria()">Fechar</button>
+                    <button class="btn-imprimir" onclick="imprimirSangria()">
+                        <i data-lucide="printer" style="width: 16px;"></i>
+                        Imprimir Comprovante
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     MODAL SUPRIMENTO DE CAIXA
+═══════════════════════════════════════════════════════ -->
+    <div id="suprimento-modal" class="modal-overlay hidden">
+        <div class="suprimento-card">
+            <div class="suprimento-header">
+                <div class="suprimento-icon-wrap"><i data-lucide="wallet"></i></div>
+                <h2>Abertura de Caixa</h2>
+                <p>Informe o valor do suprimento inicial em dinheiro</p>
+            </div>
+            <div class="suprimento-body">
+                <div class="sup-display" id="sup-display">
+                    <span class="sup-label">SUPRIMENTO</span>
+                    <span id="sup-value">R$ 0,00</span>
+                </div>
+                <div class="sup-numpad">
+                    <button onclick="supNp('1')">1</button>
+                    <button onclick="supNp('2')">2</button>
+                    <button onclick="supNp('3')">3</button>
+                    <button onclick="supNp('4')">4</button>
+                    <button onclick="supNp('5')">5</button>
+                    <button onclick="supNp('6')">6</button>
+                    <button onclick="supNp('7')">7</button>
+                    <button onclick="supNp('8')">8</button>
+                    <button onclick="supNp('9')">9</button>
+                    <button onclick="supNp('00')">00</button>
+                    <button onclick="supNp('0')">0</button>
+                    <button class="sup-del" onclick="supNp('DEL')"><i data-lucide="delete"></i></button>
+                </div>
+                <div class="sup-actions">
+                    <button class="btn-pular" onclick="confirmarSuprimento(true)">Pular (sem suprimento)</button>
+                    <button class="btn-abrir-cx" onclick="confirmarSuprimento(false)">
+                        <i data-lucide="unlock"></i> ABRIR CAIXA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     MODAL PRÉVIA DO CUPOM
+═══════════════════════════════════════════════════════ -->
+    <div id="ticket-modal" class="modal-overlay hidden">
+        <div class="ticket-preview-card">
+            <div class="ticket-preview-header">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <i data-lucide="printer"></i>
+                    <h3>Pré-visualização do Cupom</h3>
+                </div>
+                <button class="btn-close-ticket" onclick="fecharTicket()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="ticket-paper-wrap">
+                <div id="ticket-paper" class="ticket-paper"></div>
+            </div>
+            <p class="ticket-info-txt"><i data-lucide="info"></i> Serão impressos tickets separados por produto</p>
+            <div class="ticket-preview-footer">
+                <button class="btn-fechar-ticket" onclick="fecharTicket()">Fechar</button>
+                <button class="btn-imprimir" onclick="executarImpressao()">
+                    <i data-lucide="printer"></i> Imprimir Tickets
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     DRAWER LATERAL — ITENS DO PEDIDO (CARRINHO)
+═══════════════════════════════════════════════════════ -->
+    <div id="itens-drawer" class="itens-drawer">
+        <div class="itens-backdrop" onclick="fecharItens()"></div>
+
+        <div class="itens-panel">
+            <!-- Header -->
+            <div class="itens-panel-header">
+                <button class="itens-close-btn" onclick="fecharItens()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+                <div class="itens-panel-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1" />
+                        <circle cx="20" cy="21" r="1" />
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                    </svg>
+                    <span>Itens do Pedido</span>
+                </div>
+                <span id="drawer-badge" class="drawer-badge">0</span>
+            </div>
+
+            <!-- Dica de Deslizar -->
+            <div class="swipe-hint-banner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                    class="swipe-arrow">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+                <span>Dica: Deslize para a direita para fechar</span>
+            </div>
+
+            <!-- Lista de itens do carrinho -->
+            <div class="itens-panel-body" id="drawer-cart-list">
+                <div class="drawer-empty">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                        opacity=".3">
+                        <circle cx="9" cy="21" r="1" />
+                        <circle cx="20" cy="21" r="1" />
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                    </svg>
+                    <p>Nenhum item adicionado</p>
+                </div>
+            </div>
+
+            <!-- Rodapé: ações da venda -->
+            <div class="itens-panel-footer">
+                <!-- Linha 1: NOVA VENDA + CANCELAR -->
+                <div class="drawer-actions-row">
+                    <button class="drawer-btn-nova" onclick="novaVenda()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        NOVA VENDA
+                    </button>
+                    <button class="drawer-btn-cancel" onclick="cancelarItem()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                        CANCELAR
+                    </button>
+                </div>
+                <!-- Linha 2: PAGAR -->
+                <button class="drawer-pay-btn" id="drawer-pay-btn" onclick="fecharItens(); abrirPagamento();" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                        <line x1="1" y1="10" x2="23" y2="10" />
+                    </svg>
+                    PAGAR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST de confirmação -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     MODAL FECHAMENTO DE CAIXA
+═══════════════════════════════════════════════════════ -->
+    <div id="fechamento-modal" class="modal-overlay hidden">
+        <div class="sangria-card" style="max-width:480px;">
+            <!-- Header -->
+            <div class="sangria-header" style="background:var(--brand-dark);">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <i data-lucide="clipboard-check" style="width: 20px;"></i>
+                    <h3>Fechamento de Caixa</h3>
+                </div>
+                <button class="btn-close-ticket" onclick="fecharFechamentoModal()">
+                    <i data-lucide="x" style="width: 18px;"></i>
+                </button>
+            </div>
+
+            <!-- Relatório -->
+            <div class="sangria-body" style="padding: 0;">
+                <div class="ticket-paper-wrap" style="max-height: 55vh; overflow-y: auto; padding: 16px;">
+                    <div id="fechamento-paper" class="ticket-paper"></div>
+                </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="sangria-body" style="padding-top:0;">
+                <div class="sangria-actions">
+                    <button class="btn-pular" onclick="fecharFechamentoModal()">Cancelar</button>
+                    <button class="btn-imprimir" onclick="confirmarFechamentoCaixa()">
+                        <i data-lucide="printer" style="width: 16px;"></i>
+                        Imprimir e Fechar Caixa
+                    </button>
+                </div>
+                <button
+                    style="width:100%;padding:12px;background:#fee2e2;color:var(--danger);border:1.5px solid #fca5a5;border-radius:var(--radius);font-size:13px;font-weight:800;cursor:pointer;"
+                    onclick="confirmarFechamentoCaixa(false)">
+                    Fechar Caixa Sem Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     DRAWER SLIM DE MENU (⋮)
+═══════════════════════════════════════════════════════ -->
+    <div id="menu-drawer" class="menu-drawer">
+        <div class="itens-backdrop" onclick="fecharMenuOpcoes()"></div>
+        <div class="menu-panel">
+
+            <!-- Header -->
+            <div class="menu-panel-header">
+                <button class="itens-close-btn" onclick="fecharMenuOpcoes()">
+                    <i data-lucide="x" style="width: 18px;"></i>
+                </button>
+                <div class="itens-panel-title">
+                    <i data-lucide="menu" style="width: 16px;"></i>
+                    <span>Menu</span>
+                </div>
+            </div>
+
+            <!-- Dica de Deslizar -->
+            <div class="swipe-hint-banner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                    class="swipe-arrow">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+                <span>Dica: Deslize para a direita para fechar</span>
+            </div>
+
+            <!-- Informações do caixa -->
+            <div class="menu-caixa-info">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span id="menu-terminal-label">CAIXA</span>
+                    <span style="font-size: 11px; color: var(--text-sub); opacity: 0.7; font-weight: 700;">Versão <span
+                            id="menu-version-label">1.0.0</span></span>
+                </div>
+                <span id="menu-operator-label" class="menu-operator">—</span>
+            </div>
+
+            <!-- Opções -->
+            <div class="menu-opcoes">
+
+                <button class="menu-opcao" onclick="fecharMenuOpcoes(); abrirSangria()">
+                    <div class="menu-opcao-icon menu-icon-sangria">
+                        <i data-lucide="wallet" style="width: 20px;"></i>
+                    </div>
+                    <div class="menu-opcao-info">
+                        <span class="menu-opcao-title">Sangria</span>
+                        <span class="menu-opcao-desc">Retirada de valor do caixa</span>
+                    </div>
+                    <i data-lucide="chevron-right" style="width: 16px; opacity: .4;"></i>
+                </button>
+
+                <button class="menu-opcao" onclick="fecharMenuOpcoes(); fecharCaixa()">
+                    <div class="menu-opcao-icon menu-icon-fechar">
+                        <i data-lucide="clipboard-check" style="width: 20px;"></i>
+                    </div>
+                    <div class="menu-opcao-info">
+                        <span class="menu-opcao-title">Fechamento de Caixa</span>
+                        <span class="menu-opcao-desc">Encerrar o turno atual</span>
+                    </div>
+                    <i data-lucide="chevron-right" style="width: 16px; opacity: .4;"></i>
+                </button>
+
+                <button class="menu-opcao" onclick="fecharMenuOpcoes(); abrirCancelamento()">
+                    <div class="menu-opcao-icon menu-icon-cancel">
+                        <i data-lucide="x-circle" style="width: 20px;"></i>
+                    </div>
+                    <div class="menu-opcao-info">
+                        <span class="menu-opcao-title">Cancelamento</span>
+                        <span class="menu-opcao-desc">Cancelar últimas vendas (50 tickets)</span>
+                    </div>
+                    <i data-lucide="chevron-right" style="width: 16px; opacity: .4;"></i>
+                </button>
+
+                <button class="menu-opcao" onclick="fecharMenuOpcoes(); abrirDevolucoes()">
+                    <div class="menu-opcao-icon menu-icon-devolver" style="color: var(--warning);">
+                        <i data-lucide="rotate-ccw" style="width: 20px;"></i>
+                    </div>
+                    <div class="menu-opcao-info">
+                        <span class="menu-opcao-title">Devoluções</span>
+                        <span class="menu-opcao-desc">Estornar valor de fichas ou trocar por crédito</span>
+                    </div>
+                    <i data-lucide="chevron-right" style="width: 16px; opacity: .4;"></i>
+                </button>
+
+                <div class="menu-divider"></div>
+
+                <button class="menu-opcao menu-opcao-sair" onclick="fecharMenuOpcoes(); doLogout()">
+                    <div class="menu-opcao-icon menu-icon-sair">
+                        <i data-lucide="log-out" style="width: 20px;"></i>
+                    </div>
+                    <div class="menu-opcao-info">
+                        <span class="menu-opcao-title">Sair</span>
+                        <span class="menu-opcao-desc">Encerrar sessão do operador</span>
+                    </div>
+                    <i data-lucide="chevron-right" style="width: 16px; opacity: .4;"></i>
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     DRAWER DE REIMPRESSÃO — Histórico dos últimos 50 tickets
+═══════════════════════════════════════════════════════ -->
+    <div id="reimp-drawer" class="itens-drawer">
+        <div class="itens-backdrop" onclick="fecharReimpressao()"></div>
+        <div class="itens-panel">
+
+            <!-- Header -->
+            <div class="itens-panel-header">
+                <button class="itens-close-btn" onclick="fecharReimpressao()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+                <div class="itens-panel-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="1 4 1 10 7 10" />
+                        <path d="M3.51 15a9 9 0 1 0 .49-3.57" />
+                    </svg>
+                    <span>Reimpressão</span>
+                </div>
+                <!-- Busca -->
+                <div class="itens-search-wrap">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" id="reimp-search" placeholder="Buscar produto..."
+                        oninput="filtrarReimpressao(this.value)">
+                </div>
+            </div>
+
+            <!-- Dica de Deslizar -->
+            <div class="swipe-hint-banner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                    class="swipe-arrow">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+                <span>Dica: Deslize para a direita para fechar</span>
+            </div>
+
+            <!-- Lista de histórico -->
+            <div class="reimp-body" id="reimp-list">
+                <div class="drawer-empty">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"
+                        opacity=".3">
+                        <polyline points="1 4 1 10 7 10" />
+                        <path d="M3.51 15a9 9 0 1 0 .49-3.57" />
+                    </svg>
+                    <p>Nenhum ticket impresso ainda</p>
+                    <small>Os tickets impressos aparecerão aqui</small>
+                </div>
+            </div>
+
+            <!-- Rodapé -->
+            <div class="reimp-footer">
+                <span id="reimp-count" class="reimp-count">0 registros</span>
+                <button class="reimp-clear-btn" onclick="limparHistoricoImpressao()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14H6L5 6" />
+                        <path d="M10 11v6M14 11v6" />
+                    </svg>
+                    Limpar histórico
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     DRAWER DE CANCELAMENTO — Últimas 50 vendas
+═══════════════════════════════════════════════════════ -->
+    <div id="cancel-drawer" class="itens-drawer">
+        <div class="itens-backdrop" onclick="fecharCancelamento()"></div>
+        <div class="itens-panel">
+
+            <!-- Header -->
+            <div class="itens-panel-header">
+                <button class="itens-close-btn" onclick="fecharCancelamento()">
+                    <i data-lucide="x" style="width: 20px;"></i>
+                </button>
+                <div class="itens-panel-title">
+                    <i data-lucide="x-circle" style="width: 18px; margin-right: 8px;"></i>
+                    <span>Cancelamento</span>
+                </div>
+                <!-- Busca -->
+                <div class="itens-search-wrap">
+                    <i data-lucide="search" style="width: 13px;"></i>
+                    <input type="text" id="cancel-search" placeholder="Buscar venda..."
+                        oninput="filtrarCancelamento(this.value)">
+                </div>
+            </div>
+
+            <!-- Dica de Deslizar -->
+            <div class="swipe-hint-banner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                    class="swipe-arrow">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+                <span>Dica: Deslize para a direita para fechar</span>
+            </div>
+
+            <!-- Lista de histórico -->
+            <div class="reimp-body" id="cancel-list">
+                <div class="drawer-empty">
+                    <i data-lucide="inbox" style="width: 44px; height: 44px; opacity: 0.3;"></i>
+                    <p>Nenhuma venda encontrada</p>
+                    <small>As últimas vendas aparecerão aqui</small>
+                </div>
+            </div>
+
+            <!-- Rodapé -->
+            <div class="reimp-footer">
+                <span id="cancel-count" class="reimp-count">0 registros</span>
+                <button class="reimp-clear-btn" onclick="limparHistoricoImpressao()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14H6L5 6" />
+                        <path d="M10 11v6M14 11v6" />
+                    </svg>
+                    Limpar histórico
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     DRAWER DE DEVOLUÇÕES
+    ═══════════════════════════════════════════════════════ -->
+    <div id="devolucao-drawer" class="itens-drawer">
+        <div class="itens-backdrop" onclick="fecharDevolucoes()"></div>
+        <div class="itens-panel">
+
+            <!-- Header -->
+            <div class="itens-panel-header">
+                <button class="itens-close-btn" onclick="fecharDevolucoes()">
+                    <i data-lucide="x" style="width: 20px;"></i>
+                </button>
+                <div class="itens-panel-title">
+                    <i data-lucide="rotate-ccw" style="width: 18px; margin-right: 8px;"></i>
+                    <span>Devolução de Fichas</span>
+                </div>
+            </div>
+
+            <!-- Corpo -->
+            <div class="devolucao-body" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; padding: 12px; gap: 12px;">
+                
+                <!-- Busca e Lista de Produtos Rápidos -->
+                <div class="devolucao-secao-produtos" style="display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;">
+                    <div class="itens-search-wrap" style="border: 1px solid var(--border-dark);">
+                        <i data-lucide="search" style="width: 13px; color: var(--text-sub);"></i>
+                        <input type="text" id="devolucao-search" placeholder="Buscar produto para devolução..."
+                            oninput="filtrarProdutosDevolucao(this.value)">
+                    </div>
+                    <div id="devolucao-produtos-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 140px; overflow-y: auto; padding: 2px;">
+                        <!-- Produtos renderizados dinamicamente via JS -->
+                    </div>
+                </div>
+
+                <div class="menu-divider" style="margin: 0; flex-shrink: 0;"></div>
+
+                <!-- Lista de Itens a Devolver -->
+                <div class="devolucao-carrinho-secao" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                    <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-sub); margin-bottom: 6px; display: block;">
+                        Fichas a Devolver
+                    </span>
+                    <div id="devolucao-cart-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Itens adicionados para devolução aparecem aqui -->
+                        <div class="drawer-empty" style="padding: 20px 10px;">
+                            <i data-lucide="info" style="width: 32px; height: 32px; opacity: 0.3;"></i>
+                            <p style="font-size: 13px;">Nenhuma ficha selecionada</p>
+                            <small style="font-size: 11px;">Selecione um produto acima para iniciar a devolução</small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Rodapé -->
+            <div class="itens-panel-footer" style="border-top: 1px solid var(--border);">
+                <!-- Valor Total a Devolver -->
+                <div class="resumo-row" style="font-size: 14px; font-weight: 800; color: var(--text-sub); margin-bottom: 4px;">
+                    <span>VALOR DO REEMBOLSO:</span>
+                    <span id="devolucao-total-val" style="font-size: 20px; font-weight: 900; color: var(--danger);">R$ 0,00</span>
+                </div>
+                
+                <!-- Ações -->
+                <div class="drawer-actions-row" style="margin-top: 4px;">
+                    <!-- Estornar em Dinheiro -->
+                    <button class="drawer-pay-btn" id="btn-estornar-dinheiro" onclick="executarEstornoDinheiro()" disabled style="background: var(--danger); flex: 1; padding: 12px; font-size: 13px; font-weight: 800;">
+                        <i data-lucide="dollar-sign" style="width: 16px; margin-right: 4px;"></i>
+                        Estornar Dinheiro
+                    </button>
+                    <!-- Gerar Crédito de Troca -->
+                    <button class="drawer-pay-btn" id="btn-gerar-credito" onclick="executarGerarCredito()" disabled style="background: var(--warning); color: white; flex: 1; padding: 12px; font-size: 13px; font-weight: 800;">
+                        <i data-lucide="arrow-left-right" style="width: 16px; margin-right: 4px;"></i>
+                        Gerar Crédito (Troca)
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
