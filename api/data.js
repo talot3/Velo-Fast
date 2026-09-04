@@ -1,5 +1,6 @@
-const { setCors, getStoreId } = require('../lib/supabase');
+const { setCors, getStoreId, handleError } = require('../lib/supabase');
 const { readState } = require('../lib/state');
+const { requireAuth } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
     setCors(res);
@@ -7,11 +8,14 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'GET') return res.status(405).json({ error: 'Método não permitido' });
 
     try {
+        requireAuth(req);
         const storeId = getStoreId(req);
         const data = await readState(storeId);
-        res.status(200).json(data);
+        // Defesa extra: usuários/senhas nunca devem sair por aqui, mesmo que
+        // algum dado antigo ainda tenha o campo "users" no blob de estado.
+        const { users, ...safeData } = data;
+        res.status(200).json(safeData);
     } catch (e) {
-        console.error('Erro em /api/data:', e);
-        res.status(500).json({ error: e.message });
+        handleError(res, e, 500, 'Erro em /api/data:');
     }
 };

@@ -39,49 +39,25 @@ function setupGlobalEvents() {
  * Verifica se o administrador master está logado
  */
 function checkMasterAuth() {
-    const isLoggedIn = localStorage.getItem('velo_master_logged_in') === 'true';
-    if (isLoggedIn) {
+    VeloAuth.requireLogin('admin', () => {
         document.body.classList.add('authenticated');
         loadMasterStores();
-    } else {
+    });
+    if (!VeloAuth.getSession()) {
         document.body.classList.remove('authenticated');
         lucide.createIcons();
     }
 }
 
 /**
- * Processa a tentativa de login master (Usuário: MASTER / Senha: 123)
+ * Processa a tentativa de login master via /api/login (exige papel admin).
+ * O formulário antigo desta tela não é mais usado — o VeloAuth mostra sua
+ * própria tela de login sobreposta quando necessário.
  */
 function handleMasterLogin(event) {
     event.preventDefault();
-    
-    const usernameInput = document.getElementById('login-username');
-    const passwordInput = document.getElementById('login-password');
-    const errorMsg = document.getElementById('login-error-msg');
-    
-    if (!usernameInput || !passwordInput) return;
-    
-    const username = usernameInput.value.trim().toUpperCase();
-    const password = passwordInput.value;
-    
-    // Validação rígida local (Master)
-    if (username === 'MASTER' && password === '123') {
-        localStorage.setItem('velo_master_logged_in', 'true');
-        errorMsg.classList.add('hidden');
-        document.body.classList.add('authenticated');
-        
-        // Carrega lojas após login com sucesso
-        loadMasterStores();
-    } else {
-        errorMsg.classList.remove('hidden');
-        passwordInput.value = '';
-        passwordInput.focus();
-        
-        // Oculta mensagem de erro automaticamente após 5 segundos
-        setTimeout(() => {
-            errorMsg.classList.add('hidden');
-        }, 5000);
-    }
+    // Mantido apenas por compatibilidade com o HTML existente; o fluxo real
+    // de autenticação agora acontece via VeloAuth.requireLogin (assets/auth.js).
 }
 
 /**
@@ -89,15 +65,9 @@ function handleMasterLogin(event) {
  */
 function handleMasterLogout() {
     if (confirm('Deseja realmente sair do GELIC?')) {
-        localStorage.removeItem('velo_master_logged_in');
+        VeloAuth.clearSession();
         document.body.classList.remove('authenticated');
-        
-        // Limpa campos do formulário de login
-        const usernameInput = document.getElementById('login-username');
-        const passwordInput = document.getElementById('login-password');
-        if (usernameInput) usernameInput.value = 'master';
-        if (passwordInput) passwordInput.value = '123';
-        
+
         masterState.stores = [];
         masterState.currentStoreId = '';
         masterState.searchTerm = '';
@@ -135,7 +105,7 @@ function toggleLoginPassword() {
  */
 async function loadMasterStores() {
     try {
-        const response = await fetch('/api/master/stores');
+        const response = await fetch('/api/master/stores', { headers: VeloAuth.authHeaders() });
         if (!response.ok) throw new Error('Falha ao obter lista de lojas do servidor.');
         
         const result = await response.json();
@@ -516,7 +486,7 @@ async function selectStoreActive(storeId) {
         // POST síncrono para chavear o banco de dados ativo do servidor local
         const response = await fetch('/api/master/select-store', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: VeloAuth.authHeaders(),
             body: JSON.stringify({ storeId })
         });
         
@@ -553,7 +523,7 @@ async function toggleStoreLicense(storeId, active) {
     try {
         const response = await fetch('/api/master/toggle-license', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: VeloAuth.authHeaders(),
             body: JSON.stringify({ storeId, active })
         });
         
@@ -735,7 +705,7 @@ async function saveNewStoreMaster() {
             // Como a API /api/master/toggle-license permite passar expireDate e active, vamos usá-la!
             const response = await fetch('/api/master/toggle-license', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: VeloAuth.authHeaders(),
                 body: JSON.stringify({ 
                     storeId, 
                     expireDate,
@@ -797,7 +767,7 @@ async function saveNewStoreMaster() {
         
         const response = await fetch('/api/master/create-store', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: VeloAuth.authHeaders(),
             body: JSON.stringify(payload)
         });
         

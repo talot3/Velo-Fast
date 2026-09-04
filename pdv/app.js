@@ -21,7 +21,6 @@ let searchQuery    = '';
 document.addEventListener('DOMContentLoaded', () => {
     startClock();
     restoreSession();
-    syncData();
     setupSwipeToClose('itens-drawer', fecharItens);
     setupSwipeToClose('menu-drawer', fecharMenuOpcoes);
     setupSwipeToClose('reimp-drawer', fecharReimpressao);
@@ -39,7 +38,7 @@ function startClock() {
 
 // ── SINCRONIZAÇÃO ────────────────────────────────────────
 function syncData() {
-    return fetch('/api/data')
+    return fetch('/api/data', { headers: VeloAuth.authHeaders() })
         .then(r => r.json())
         .then(data => {
             if (data.products)       db.products       = data.products;
@@ -198,7 +197,7 @@ function restoreSession() {
     if (saved && saved.loggedIn) {
         session = saved;
         order   = JSON.parse(localStorage.getItem('tp_order') || '[]');
-        showPDV();
+        VeloAuth.requireLogin('operador', () => { showPDV(); syncData(); });
     } else {
         const tid = new URLSearchParams(location.search).get('tid')
                     || localStorage.getItem('tp_tid') || 'CX001';
@@ -278,32 +277,20 @@ window.doLogin = async function() {
         return;
     }
 
-    // Se db.users ainda está vazio, sincroniza primeiro antes de autenticar
-    if (!db.users || db.users.length === 0) {
-        msg.textContent = '⟳ Conectando ao servidor...';
-        msg.style.color = 'var(--text-sub)';
-        if (btn) { btn.disabled = true; btn.textContent = 'Aguarde...'; }
-        try { await syncData(); } catch(e) { /* fallback já tratado dentro de syncData */ }
+    // Autenticação real no servidor (a senha nunca fica só no navegador)
+    msg.textContent = '⟳ Autenticando...';
+    msg.style.color = 'var(--text-sub)';
+    if (btn) { btn.disabled = true; btn.textContent = 'Aguarde...'; }
+    try {
+        await VeloAuth.login(operator, password);
+    } catch (e) {
         if (btn) { btn.disabled = false; btn.textContent = 'ACESSAR CAIXA'; }
         msg.style.color = '';
-    }
-
-    // Autenticação de Usuário
-    if (db.users && db.users.length > 0) {
-        const user = db.users.find(u => u.username === operator.toUpperCase());
-        if (!user) {
-            msg.textContent = 'Usuário não cadastrado. Verifique o acesso.';
-            return;
-        }
-        if (user.password && user.password !== password) {
-            msg.textContent = 'Senha incorreta.';
-            return;
-        }
-    } else {
-        msg.textContent = '⚠️ Servidor indisponível. Verifique a conexão e tente novamente.';
+        msg.textContent = e.message || 'Usuário ou senha inválidos.';
         return;
     }
-
+    if (btn) { btn.disabled = false; btn.textContent = 'ACESSAR CAIXA'; }
+    msg.style.color = '';
     msg.textContent = '';
 
     session.operator   = operator;
@@ -330,6 +317,7 @@ window.doLogin = async function() {
 window.doLogout = function() {
     // Encerra apenas a sessão do operador.
     // NÃO remove tp_caixa_aberto — o caixa continua aberto para o próximo login.
+    VeloAuth.clearSession();
     session  = { loggedIn: false, operator: '', terminalId: '', suprimento: 0 };
     order    = []; payments = [];
     localStorage.removeItem('tp_session');
@@ -917,14 +905,13 @@ window.executarEstornoDinheiro = async function() {
     });
     
     try {
-        const res = await fetch('/api/push-sales', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(transactions)
-        });
-        const data = await res.json();
-        
-        if (data.success) {
+        const res = await VeloAuth.postJSON('/api/push-sales', transactions);
+        const data = res.data;
+        if (res.queued) {
+            toast('Sem conexão — estorno será enviado automaticamente quando a rede voltar.');
+        }
+
+        if (data.success || res.queued) {
             const sessionSales = JSON.parse(localStorage.getItem('tp_session_sales') || '[]');
             transactions.forEach(tx => sessionSales.push(tx));
             localStorage.setItem('tp_session_sales', JSON.stringify(sessionSales));
@@ -1111,13 +1098,14 @@ window.finalizarVenda = async function() {
         }
     });
 
-    // Salva no servidor
-    try {
-        await fetch('/api/push-sales', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(transactions),
-        });
-    } catch (e) { console.warn('Falha ao salvar vendas:', e.message); }
+    // Salva no servidor — se falhar, entra na fila e é reenviado sozinho
+    // assim que a rede voltar (a venda não fica "perdida" sem aviso).
+    const pushResult = await VeloAuth.postJSON('/api/push-sales', transactions);
+    if (pushResult.queued) {
+        toast('⚠️ Sem conexão — venda será sincronizada automaticamente.');
+    } else if (!pushResult.ok) {
+        console.warn('Falha ao salvar vendas:', pushResult.data && pushResult.data.error);
+    }
 
     pendingTransactions = transactions;
 
@@ -1550,11 +1538,20 @@ function renderCancelamento(hist) {
 window.cancelarVenda = async function(id) {
     if (!confirm('Deseja realmente cancelar esta venda? Esta ação não pode ser desfeita.')) return;
 
+    // Cancelamento exige autorização de um supervisor/admin — não é mais
+    // liberado para qualquer operador só com essa confirmação.
+    let supervisorToken;
+    try {
+        supervisorToken = await VeloAuth.elevate('supervisor');
+    } catch (e) {
+        return; // autorização cancelada pelo usuário
+    }
+
     try {
         toast('⏳ Cancelando venda...');
         const res = await fetch('/api/cancel-sale', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + supervisorToken },
             body: JSON.stringify({ id })
         });
         

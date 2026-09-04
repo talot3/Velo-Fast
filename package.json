@@ -7,6 +7,8 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4"
+    "@supabase/supabase-js": "^2.45.4",
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.3"
   }
 }

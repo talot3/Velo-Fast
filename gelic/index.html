@@ -31,7 +31,7 @@
                         <label for="login-username">Login / Usuário</label>
                         <div class="login-input-wrapper">
                             <i data-lucide="user"></i>
-                            <input type="text" id="login-username" value="master" placeholder="Digite o usuário master..." required autocomplete="username">
+                            <input type="text" id="login-username" placeholder="Digite o usuário master..." required autocomplete="username">
                         </div>
                     </div>
 
@@ -39,7 +39,7 @@
                         <label for="login-password">Senha de Segurança</label>
                         <div class="login-input-wrapper">
                             <i data-lucide="lock"></i>
-                            <input type="password" id="login-password" value="123" placeholder="Digite a senha master..." required autocomplete="current-password">
+                            <input type="password" id="login-password" placeholder="Digite a senha master..." required autocomplete="current-password">
                             <button type="button" class="toggle-pass-btn" onclick="toggleLoginPassword()">
                                 <i data-lucide="eye" id="toggle-pass-icon"></i>
                             </button>
@@ -143,6 +143,7 @@
         </div>
     </div>
 
+    <script src="../assets/auth.js"></script>
     <script src="app.js"></script>
     <script>
         // Update Live Clock

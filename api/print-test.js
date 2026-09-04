@@ -1,6 +1,7 @@
-const { setCors, getStoreId, readBody } = require('../lib/supabase');
+const { setCors, getStoreId, readBody, handleError } = require('../lib/supabase');
 const { readState } = require('../lib/state');
 const { buildEscPos, printNetworkRaw } = require('../lib/print');
+const { requireAuth } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
     setCors(res);
@@ -8,6 +9,7 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
     try {
+        requireAuth(req, 'supervisor');
         const storeId = getStoreId(req);
         const { printerId } = await readBody(req);
         const data = await readState(storeId);
@@ -36,7 +38,6 @@ module.exports = async function handler(req, res) {
         await printNetworkRaw(printer, printData);
         res.status(200).json({ success: true, printerName: printer.name });
     } catch (e) {
-        console.error('Erro no teste de impressão:', e);
-        res.status(500).json({ error: e.message });
+        handleError(res, e, 500, 'Erro no teste de impressão:');
     }
 };

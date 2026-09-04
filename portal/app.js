@@ -46,7 +46,7 @@ async function syncFromServer() {
     };
 
     try {
-        const res = await fetch(`${baseUrl}/api/data`);
+        const res = await fetch(`${baseUrl}/api/data`, { headers: VeloAuth.authHeaders() });
         if (res.ok) {
             const data = await res.json();
             state = { ...state, ...data };
@@ -77,11 +77,12 @@ async function pushToServer(partialData) {
     saveLocalBackup();
 
     try {
-        await fetch(`${baseUrl}/api/save`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(partialData)
-        });
+        const result = await VeloAuth.postJSON(`${baseUrl}/api/save`, partialData);
+        if (result.queued) {
+            console.warn('Sem conexão — alteração será reenviada automaticamente.');
+        } else if (!result.ok) {
+            console.error('Servidor recusou a alteração:', result.data && result.data.error);
+        }
     } catch (e) {
         console.error('Erro ao salvar no servidor:', e);
     }
@@ -104,7 +105,7 @@ function saveLocalBackup() {
 }
 // Lifecycle
 document.addEventListener('DOMContentLoaded', () => {
-    syncFromServer();
+    VeloAuth.requireLogin('supervisor', () => { syncFromServer(); });
 });
 
 function initApp() {
@@ -2757,7 +2758,7 @@ window.testPrinter = async function(printerId) {
 
         const res  = await fetch(`${baseUrl}/api/print-test`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: VeloAuth.authHeaders(),
             body: JSON.stringify({ printerId }),
         });
         const json = await res.json();
@@ -4433,7 +4434,7 @@ async function loadPortalStoresInfo() {
     const baseUrl = isFileProtocol ? 'http://localhost:8080' : '';
     
     try {
-        const res = await fetch(`${baseUrl}/api/master/stores`);
+        const res = await fetch(`${baseUrl}/api/master/stores`, { headers: VeloAuth.authHeaders() });
         if (!res.ok) throw new Error('Não foi possível obter dados das lojas.');
         
         const result = await res.json();
@@ -4538,7 +4539,7 @@ window.selectStorePortal = async function(storeId) {
     try {
         const response = await fetch(`${baseUrl}/api/master/select-store`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: VeloAuth.authHeaders(),
             body: JSON.stringify({ storeId })
         });
         

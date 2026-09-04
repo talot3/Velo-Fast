@@ -1,5 +1,6 @@
-const { setCors, getStoreId, readBody } = require('../lib/supabase');
+const { setCors, getStoreId, readBody, handleError } = require('../lib/supabase');
 const { readState, writeState } = require('../lib/state');
+const { requireAuth } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
     setCors(res);
@@ -7,6 +8,9 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
     try {
+        // Cancelamento de venda exige autorização de supervisor ou admin —
+        // não é mais liberado para qualquer operador com um simples confirm().
+        requireAuth(req, 'supervisor');
         const storeId = getStoreId(req);
         const payload = await readBody(req);
         if (!payload || !payload.id) {
@@ -42,7 +46,6 @@ module.exports = async function handler(req, res) {
 
         res.status(200).json({ success: true });
     } catch (e) {
-        console.error('Erro em /api/cancel-sale:', e);
-        res.status(500).json({ error: e.message });
+        handleError(res, e, 500, 'Erro em /api/cancel-sale:');
     }
 };

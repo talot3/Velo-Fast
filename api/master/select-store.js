@@ -1,4 +1,5 @@
-const { setCors, getSupabase, readBody } = require('../../lib/supabase');
+const { setCors, getSupabase, readBody, handleError } = require('../../lib/supabase');
+const { requireAdmin } = require('../../lib/auth');
 
 module.exports = async function handler(req, res) {
     setCors(res);
@@ -6,6 +7,7 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
     try {
+        requireAdmin(req); // painel master exige admin
         const { storeId } = await readBody(req);
         const supabase = getSupabase();
 
@@ -19,7 +21,6 @@ module.exports = async function handler(req, res) {
 
         res.status(200).json({ success: true, currentStoreId: storeId, storeName: store.name });
     } catch (e) {
-        console.error('Erro em /api/master/select-store:', e);
-        res.status(400).json({ error: e.message || 'JSON inválido' });
+        handleError(res, e, 400, 'Erro em /api/master/select-store:');
     }
 };
