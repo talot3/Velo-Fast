@@ -173,11 +173,9 @@
             </div>
         </div>
     </div>
-    <script>
-        if (localStorage.getItem('velo_portal_logged_in') === 'true') {
-            document.body.classList.add('authenticated');
-        }
-    </script>
+    <!-- A autenticação real acontece via VeloAuth (assets/auth.js), que verifica
+         a sessão com o servidor a cada carregamento — nada aqui libera acesso
+         sem uma verificação de verdade. -->
 
     <!-- Login Screen -->
     <div id="login-container" class="login-container">
@@ -826,40 +824,12 @@
         }
 
         // --- LOGIN LOGIC ---
+        // A autenticação real acontece via VeloAuth (assets/auth.js), que fala
+        // direto com /api/login no servidor. Este formulário nativo não é
+        // mais usado para autenticar — mantido apenas por compatibilidade
+        // com o HTML existente, caso algo ainda dispare o evento de submit.
         window.handleLogin = function (event) {
             event.preventDefault();
-            const usernameInput = document.getElementById('login-username');
-            const passwordInput = document.getElementById('login-password');
-            const errorMsg = document.getElementById('login-error-msg');
-
-            const username = usernameInput.value.trim().toUpperCase();
-            const password = passwordInput.value;
-
-            // Database-driven auth with safe local defaults
-            const isWagner = username === 'WAGNER' && password === 'Lu@123';
-            const isAdmin = username === 'ADMIN' && password === '123';
-
-            // Check state.users array from db
-            const isDbUser = typeof state !== 'undefined' && state && Array.isArray(state.users) && state.users.some(u =>
-                u.username.toUpperCase() === username && u.password === password
-            );
-
-            if (isWagner || isAdmin || isDbUser) {
-                // Success
-                localStorage.setItem('velo_portal_logged_in', 'true');
-                document.body.classList.add('authenticated');
-
-                // Hide error and reset fields
-                errorMsg.classList.add('hidden');
-
-                // Re-sync and init
-                if (typeof syncFromServer === 'function') {
-                    syncFromServer();
-                }
-            } else {
-                // Failure
-                errorMsg.classList.remove('hidden');
-            }
         };
 
         window.toggleLoginPassword = function () {
@@ -882,18 +852,9 @@
         };
 
         window.handleLogout = function () {
-            localStorage.removeItem('velo_portal_logged_in');
+            VeloAuth.clearSession();
             document.body.classList.remove('authenticated');
-
-            const usernameInput = document.getElementById('login-username');
-            const passwordInput = document.getElementById('login-password');
-            if (usernameInput) usernameInput.value = '';
-            if (passwordInput) passwordInput.value = '';
-
-            const errorMsg = document.getElementById('login-error-msg');
-            if (errorMsg) errorMsg.classList.add('hidden');
-
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            location.reload();
         };
 
         // Initialize Carousel on load

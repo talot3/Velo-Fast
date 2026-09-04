@@ -105,7 +105,10 @@ function saveLocalBackup() {
 }
 // Lifecycle
 document.addEventListener('DOMContentLoaded', () => {
-    VeloAuth.requireLogin('supervisor', () => { syncFromServer(); });
+    VeloAuth.requireLogin('supervisor', () => {
+        document.body.classList.add('authenticated');
+        syncFromServer();
+    });
 });
 
 function initApp() {
@@ -190,7 +193,7 @@ window.triggerManualSync = async function () {
 };
 
 function applyTheme() {
-    const mode = localStorage.getItem('tp_theme_mode') || 'system';
+    const mode = localStorage.getItem('tp_theme_mode') || 'dark';
     let isDark = false;
 
     if (mode === 'dark') {

@@ -193,26 +193,37 @@ function applyTerminalConfig() {
 // SESSÃO / PERSISTÊNCIA
 // ════════════════════════════════════════════════════════
 function restoreSession() {
-    const saved = JSON.parse(localStorage.getItem('tp_session') || 'null');
-    if (saved && saved.loggedIn) {
-        session = saved;
-        order   = JSON.parse(localStorage.getItem('tp_order') || '[]');
-        VeloAuth.requireLogin('operador', () => { showPDV(); syncData(); });
-    } else {
+    // Esconde a tela de login antiga imediatamente — o VeloAuth é o único
+    // ponto de login agora, evitando as duas telas empilhadas.
+    document.getElementById('login-screen').classList.add('hidden');
+
+    VeloAuth.requireLogin('operador', (veloSession) => {
         const tid = new URLSearchParams(location.search).get('tid')
                     || localStorage.getItem('tp_tid') || 'CX001';
-        const srv = localStorage.getItem('tp_server') || location.host;
-        document.getElementById('login-terminal').value = tid;
-        document.getElementById('login-server').value   = srv;
+        localStorage.setItem('tp_tid', tid.toUpperCase());
 
-        // Mostra dica se o caixa ainda está aberto
-        const msg = document.getElementById('login-msg');
-        if (msg && localStorage.getItem('tp_caixa_aberto') === 'true') {
-            msg.textContent = 'Caixa já aberto — informe o operador para entrar direto.';
-            msg.style.color = 'var(--success, #16a34a)';
+        const saved = JSON.parse(localStorage.getItem('tp_session') || 'null');
+        if (saved && saved.loggedIn && saved.operator === veloSession.username) {
+            // Mesmo operador já tinha uma sessão em andamento (ex.: recarregou a página)
+            session = saved;
+            order   = JSON.parse(localStorage.getItem('tp_order') || '[]');
+        } else {
+            session = { loggedIn: true, operator: veloSession.username, terminalId: tid.toUpperCase(), suprimento: 0 };
+            order = [];
         }
-        showLogin();
-    }
+
+        syncData();
+
+        if (localStorage.getItem('tp_caixa_aberto') === 'true') {
+            session.suprimento = parseFloat(localStorage.getItem('tp_suprimento_valor') || '0');
+            saveSession();
+            showPDV();
+            toast('Bem-vindo, ' + session.operator.toUpperCase() + '! Caixa já aberto.');
+        } else {
+            saveSession();
+            showSuprimento();
+        }
+    });
 }
 
 function saveSession() { localStorage.setItem('tp_session', JSON.stringify(session)); }
@@ -221,27 +232,6 @@ function saveOrderLocal() { localStorage.setItem('tp_order', JSON.stringify(orde
 // ════════════════════════════════════════════════════════
 // TELAS — NAVEGAÇÃO
 // ════════════════════════════════════════════════════════
-function showLogin() {
-    // Fecha qualquer modal/drawer aberto antes de voltar ao login
-    document.getElementById('login-screen').classList.remove('hidden');
-    document.getElementById('pdv-screen').classList.add('hidden');
-    document.getElementById('suprimento-modal').classList.add('hidden');
-    document.getElementById('sangria-modal')?.classList.add('hidden');
-    document.getElementById('menu-drawer')?.classList.remove('open');
-    document.getElementById('itens-drawer')?.classList.remove('open');
-    document.getElementById('reimp-drawer')?.classList.remove('open');
-    document.body.style.overflow = '';
-    // Pré-preenche o terminal salvo
-    const tid = localStorage.getItem('tp_tid') || 'CX001';
-    const srv = localStorage.getItem('tp_server') || location.host;
-    const opEl = document.getElementById('login-operator');
-    if (opEl) opEl.value = '';
-    const tidEl = document.getElementById('login-terminal');
-    if (tidEl) tidEl.value = tid;
-    const srvEl = document.getElementById('login-server');
-    if (srvEl) srvEl.value = srv;
-}
-
 function showSuprimento() {
     supStr = '';
     document.getElementById('sup-value').textContent = 'R$ 0,00';
@@ -263,56 +253,8 @@ function showPDV() {
 // ════════════════════════════════════════════════════════
 // LOGIN
 // ════════════════════════════════════════════════════════
-window.doLogin = async function() {
-    const operator = document.getElementById('login-operator').value.trim();
-    const password = document.getElementById('login-password').value;
-    const terminal = document.getElementById('login-terminal').value.trim() || 'CX001';
-    const server   = document.getElementById('login-server').value.trim();
-    const msg      = document.getElementById('login-msg');
-    const btn      = document.getElementById('btn-acessar');
-
-    if (!operator) {
-        msg.textContent = 'Informe o nome do usuário.';
-        document.getElementById('login-operator').focus();
-        return;
-    }
-
-    // Autenticação real no servidor (a senha nunca fica só no navegador)
-    msg.textContent = '⟳ Autenticando...';
-    msg.style.color = 'var(--text-sub)';
-    if (btn) { btn.disabled = true; btn.textContent = 'Aguarde...'; }
-    try {
-        await VeloAuth.login(operator, password);
-    } catch (e) {
-        if (btn) { btn.disabled = false; btn.textContent = 'ACESSAR CAIXA'; }
-        msg.style.color = '';
-        msg.textContent = e.message || 'Usuário ou senha inválidos.';
-        return;
-    }
-    if (btn) { btn.disabled = false; btn.textContent = 'ACESSAR CAIXA'; }
-    msg.style.color = '';
-    msg.textContent = '';
-
-    session.operator   = operator;
-    session.terminalId = terminal.toUpperCase();
-    session.loggedIn   = true;
-
-    localStorage.setItem('tp_tid',    terminal.toUpperCase());
-    localStorage.setItem('tp_server', server);
-
-    document.getElementById('login-screen').classList.add('hidden');
-    syncData();
-
-    // Se o caixa já foi aberto (suprimento feito), pula direto para o PDV
-    if (localStorage.getItem('tp_caixa_aberto') === 'true') {
-        session.suprimento = parseFloat(localStorage.getItem('tp_suprimento_valor') || '0');
-        saveSession();
-        showPDV();
-        toast('Bem-vindo, ' + operator.toUpperCase() + '! Caixa já aberto.');
-    } else {
-        showSuprimento();
-    }
-};
+// A tela de login e a autenticação agora são inteiramente controladas
+// pelo VeloAuth (assets/auth.js) — veja restoreSession() acima.
 
 window.doLogout = function() {
     // Encerra apenas a sessão do operador.
@@ -322,8 +264,9 @@ window.doLogout = function() {
     order    = []; payments = [];
     localStorage.removeItem('tp_session');
     localStorage.removeItem('tp_order');
-    showLogin();
+    document.getElementById('pdv-screen').classList.add('hidden');
     toast('Sessão encerrada. Caixa permanece aberto.');
+    restoreSession();
 };
 
 window.doSyncLogin = function() {
@@ -503,6 +446,18 @@ window.clearSearch = function() {
 // DRAWER LATERAL — CARRINHO DE ITENS
 // ════════════════════════════════════════════════════════
 
+/**
+ * No mobile, busca + numpad ficam recolhidos por padrão para dar mais
+ * espaço ao grid de produtos — o operador expande só quando precisa
+ * digitar uma quantidade antes de tocar no produto.
+ */
+window.toggleNumpadMobile = function() {
+    const el  = document.getElementById('search-numpad-collapsible');
+    const btn = document.getElementById('btn-toggle-numpad');
+    const isOpen = el.classList.toggle('expanded');
+    btn.classList.toggle('active', isOpen);
+};
+
 window.abrirItens = function() {
     renderDrawerCart();
     document.getElementById('itens-drawer').classList.add('open');
@@ -623,8 +578,8 @@ window.changeQty = function(uid, delta) {
     renderCart(); saveOrderLocal();
 };
 
-window.novaVenda = function() {
-    if (order.length && !confirm('Iniciar nova venda? O pedido atual será cancelado.')) return;
+window.novaVenda = async function() {
+    if (order.length && !(await showConfirm('Iniciar nova venda? O pedido atual será cancelado.', { confirmLabel: 'Iniciar nova venda' }))) return;
     order = []; payments = []; numpadStr = '';
     document.getElementById('numpad-value').textContent = '—';
     renderCart(); saveOrderLocal();
@@ -683,10 +638,12 @@ function renderCart() {
 
 function updateTotals(total) {
     const count = order.reduce((s, i) => s + i.qty, 0);
-    document.getElementById('order-count-label').textContent = `VENDA ATUAL: ${count} Item(s)`;
+    document.getElementById('order-count-label').textContent = `${count} ${count === 1 ? 'item' : 'itens'}`;
     document.getElementById('order-total-label').textContent = `TOTAL: R$ ${total.toFixed(2)}`;
     document.getElementById('r-subtotal').textContent        = `R$ ${total.toFixed(2)}`;
     document.getElementById('r-total').textContent           = `R$ ${total.toFixed(2)}`;
+    const drawerTotal = document.getElementById('drawer-total-value');
+    if (drawerTotal) drawerTotal.textContent = `R$ ${total.toFixed(2)}`;
     const btn = document.getElementById('btn-pagamento');
     if (btn) btn.disabled = order.length === 0;
 }
@@ -876,7 +833,10 @@ window.executarEstornoDinheiro = async function() {
     const total = devolucaoCart.reduce((s, i) => s + i.price * i.qty, 0);
     if (total <= 0) return;
     
-    if (!confirm(`Confirmar o ESTORNO EM DINHEIRO no valor de R$ ${total.toFixed(2)}?\nIsso reajustará o estoque físico e registrará uma saída (estorno) de caixa.`)) {
+    if (!(await showConfirm(
+        `Confirmar o ESTORNO EM DINHEIRO no valor de R$ ${total.toFixed(2)}? Isso reajustará o estoque físico e registrará uma saída (estorno) de caixa.`,
+        { confirmLabel: 'Confirmar estorno' }
+    ))) {
         return;
     }
     
@@ -1303,6 +1263,39 @@ function toast(msg, dur = 2800) {
     toastTimer = setTimeout(() => el.classList.add('hidden'), dur);
 }
 
+/**
+ * Modal de confirmação consistente com o resto do design, no lugar do
+ * confirm() nativo do navegador. Retorna uma Promise<boolean>.
+ */
+function showConfirm(message, { confirmLabel = 'Confirmar', cancelLabel = 'Voltar' } = {}) {
+    return new Promise((resolve) => {
+        const modal   = document.getElementById('confirm-modal');
+        const msgEl   = document.getElementById('confirm-message');
+        const btnOk   = document.getElementById('confirm-btn-ok');
+        const btnNo   = document.getElementById('confirm-btn-cancel');
+
+        msgEl.textContent   = message;
+        btnOk.textContent   = confirmLabel;
+        btnNo.textContent   = cancelLabel;
+        modal.classList.remove('hidden');
+
+        const cleanup = (result) => {
+            modal.classList.add('hidden');
+            btnOk.removeEventListener('click', onOk);
+            btnNo.removeEventListener('click', onNo);
+            modal.removeEventListener('click', onOverlay);
+            resolve(result);
+        };
+        const onOk = () => cleanup(true);
+        const onNo = () => cleanup(false);
+        const onOverlay = (ev) => { if (ev.target === modal) cleanup(false); };
+
+        btnOk.addEventListener('click', onOk);
+        btnNo.addEventListener('click', onNo);
+        modal.addEventListener('click', onOverlay);
+    });
+}
+
 // ════════════════════════════════════════════════════════
 // HISTÓRICO DE IMPRESSÃO (Reimpressão)
 // Guarda os últimos 50 tickets no localStorage
@@ -1371,8 +1364,8 @@ window.filtrarReimpressao = function(q) {
     renderReimpressao(hist);
 };
 
-window.limparHistoricoImpressao = function() {
-    if (!confirm('Limpar todo o histórico de vendas/impressões?')) return;
+window.limparHistoricoImpressao = async function() {
+    if (!(await showConfirm('Limpar todo o histórico de vendas/impressões?', { confirmLabel: 'Limpar histórico' }))) return;
     salvarHistoricoImpressao([]);
     renderReimpressao([]);
     if (typeof filtrarCancelamento === 'function') {
@@ -1536,7 +1529,7 @@ function renderCancelamento(hist) {
 }
 
 window.cancelarVenda = async function(id) {
-    if (!confirm('Deseja realmente cancelar esta venda? Esta ação não pode ser desfeita.')) return;
+    if (!(await showConfirm('Deseja realmente cancelar esta venda? Esta ação não pode ser desfeita.', { confirmLabel: 'Cancelar venda' }))) return;
 
     // Cancelamento exige autorização de um supervisor/admin — não é mais
     // liberado para qualquer operador só com essa confirmação.
@@ -1833,8 +1826,10 @@ window.confirmarFechamentoCaixa = async function(imprimir = true) {
     localStorage.removeItem('tp_order');
 
     document.getElementById('fechamento-modal').classList.add('hidden');
+    document.getElementById('pdv-screen').classList.add('hidden');
     toast('🏁 Caixa encerrado com sucesso!');
-    setTimeout(() => showLogin(), 1800);
+    VeloAuth.clearSession();
+    setTimeout(() => restoreSession(), 1800);
 };
 
 if (typeof lucide !== 'undefined') {

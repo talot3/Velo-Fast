@@ -1,38 +1,45 @@
 /* ═══════════════════════════════════════════════════════
-   TicketPro PDV — Folha de Estilos Principal
-   Paleta: Bordô #8B1A2A + Branco + Cinza claro
+   VELO FAST PDV — Folha de Estilos Principal
+   Paleta: caixa em modo escuro (uso em bar/restaurante,
+   luz baixa) + acento âmbar único para total e ação principal
 ═══════════════════════════════════════════════════════ */
 
 :root {
-    --brand:       #2563eb;
-    --brand-dark:  #1d4ed8;
-    --brand-light: #3b82f6;
-    --success:     #16a34a;
-    --success-bg:  #dcfce7;
-    --danger:      #ef4444;
-    --warning:     #f59e0b;
-    
-    /* Luxo e Tátil: Cinza quente ultra sutil de fundo (warm off-white) */
-    --bg:          #f4f3f0;
-    
-    /* Superfícies luxuosas VELO */
-    --surface:     #ffffff;
-    --surface2:    #eae8e3;
-    --border:      #e3e1da;
-    --border-dark: #d5d3ca;
-    --text:        #1c1c1e;
-    --text-sub:    #7a7975;
-    --text-light:  #a1a1aa;
-    --shadow:      0 2px 4px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.04);
-    --shadow-lg:   0 10px 30px -10px rgba(27,26,24,0.12), 0 1px 3px rgba(0,0,0,0.05);
+    /* Acento único: usado só para o total da venda e o CTA principal */
+    --brand:       #ffb020;
+    --brand-dark:  #e69a0e;
+    --brand-light: #ffc555;
+    --brand-ink:   #1a1002; /* texto sobre fundo âmbar */
+
+    /* Semânticos — nunca decorativos, só sucesso/erro/aviso */
+    --success:     #34d399;
+    --success-strong: #0b8a5f;
+    --success-bg:  rgba(52, 211, 153, 0.12);
+    --danger:      #ff5470;
+    --danger-bg:   rgba(255, 84, 112, 0.12);
+    --warning:     #f5a623;
+
+    /* Fundo — carvão morno, não preto puro */
+    --bg:          #14161b;
+
+    /* Superfícies */
+    --surface:     #1c1f26;
+    --surface2:    #242830;
+    --surface3:    #2c313b;
+    --border:      #333844;
+    --border-dark: #3f4552;
+    --text:        #f3f1ec;
+    --text-sub:    #9aa0ac;
+    --text-light:  #6b7280;
+    --shadow:      0 2px 6px rgba(0,0,0,0.25), 0 6px 16px rgba(0,0,0,0.2);
+    --shadow-lg:   0 12px 32px -8px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
     --radius:      10px;
     --radius-sm:   6px;
     --radius-lg:   16px;
     --font:        'Outfit', sans-serif;
-    
-    /* Textura de micro-concreto sutil */
-    --texture-concrete: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.15) 1px, transparent 1px), radial-gradient(circle at 0 0, rgba(0,0,0,0.03) 1px, transparent 1px);
-    --texture-concrete-size: 4px 4px;
+
+    /* Alvo de toque mínimo confortável (bar/restaurante, uso com o dedo) */
+    --tap-min:     46px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,8 +48,6 @@ html, body {
     height: 100%;
     font-family: var(--font);
     background-color: var(--bg);
-    background-image: var(--texture-concrete);
-    background-size: var(--texture-concrete-size);
     color: var(--text);
     font-size: 14px;
     overflow: hidden;
@@ -57,8 +62,6 @@ button:active { transform: scale(.97); }
 .login-screen {
     position: fixed; inset: 0;
     background-color: var(--bg);
-    background-image: var(--texture-concrete);
-    background-size: var(--texture-concrete-size);
     display: flex; align-items: center; justify-content: center;
     z-index: 1000;
 }
@@ -156,7 +159,7 @@ button:active { transform: scale(.97); }
 .input-wrap-slim input:focus {
     background: #ffffff; /* Off-white límpido quando focado */
     border-color: var(--brand);
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+    box-shadow: 0 0 0 4px rgba(255, 176, 32, 0.08);
 }
 .input-wrap-slim:focus-within .input-icon-svg {
     color: var(--brand);
@@ -168,7 +171,6 @@ button:active { transform: scale(.97); }
 
 .btn-acessar {
     background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-    background-image: var(--texture-concrete), linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
     color: #ffffff;
     border: none; border-radius: 12px;
     padding: 15px;
@@ -184,7 +186,6 @@ button:active { transform: scale(.97); }
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 .btn-acessar:hover {
-    background-image: var(--texture-concrete), linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     box-shadow: 
         0 6px 12px rgba(29, 78, 216, 0.25), 
         0 3px 6px rgba(0, 0, 0, 0.05),
@@ -235,14 +236,12 @@ button:active { transform: scale(.97); }
 /* ── HEADER PREMIUM ARDÓSIA DE ALTO CONTRASTE ────────── */
 .pdv-header {
     background: #111215;
-    background-image: var(--texture-concrete);
-    background-size: var(--texture-concrete-size);
     color: #ffffff;
     height: 60px;
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 24px;
     flex-shrink: 0;
-    border-bottom: 2px solid #2563eb; /* destaque em azul da marca VELO */
+    border-bottom: 2px solid var(--brand); /* destaque na cor da marca VELO */
     box-shadow: 0 4px 20px rgba(0,0,0,0.25);
 }
 
@@ -263,7 +262,7 @@ button:active { transform: scale(.97); }
     width: 2px; height: 16px; background: rgba(255,255,255,0.18); margin: 0 8px;
 }
 
-.hdr-operator-name { font-weight: 900; color: #60a5fa; } /* Operador em azul claro para destaque */
+.hdr-operator-name { font-weight: 900; color: var(--brand-light); } /* Operador em destaque */
 
 .pdv-header-right { display: flex; align-items: center; gap: 12px; }
 
@@ -444,9 +443,9 @@ button:active { transform: scale(.97); }
     flex-shrink: 0;
     border-bottom: 1px solid var(--border);
 }
-.order-bar-left  { display: flex; align-items: center; gap: 6px; color: var(--text-sub); }
-.order-bar-right { display: flex; align-items: center; gap: 10px; }
-.order-total-val { font-size: 16px; font-weight: 900; color: var(--text); }
+.order-bar-left  { display: flex; align-items: center; gap: 6px; color: var(--text-sub); white-space: nowrap; }
+.order-bar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.order-total-val { font-size: 16px; font-weight: 900; color: var(--brand); white-space: nowrap; }
 
 /* Oculta a lista de itens no painel esquerdo — substituída pelo drawer */
 .cart-list { display: none !important; }
@@ -460,7 +459,7 @@ button:active { transform: scale(.97); }
 /* Botão ITENS na barra */
 .btn-abrir-itens {
     display: flex; align-items: center; gap: 6px;
-    background: white;
+    background: var(--surface2);
     color: var(--text); border-radius: 20px;
     padding: 6px 14px; font-size: 13px; font-weight: 800;
     letter-spacing: .04em;
@@ -469,8 +468,25 @@ button:active { transform: scale(.97); }
     position: relative;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
-.btn-abrir-itens:hover { background: #fafafa; }
+.btn-abrir-itens:hover { background: var(--surface3); }
 .btn-abrir-itens svg { flex-shrink: 0; color: var(--text-sub); }
+
+/* Botão para expandir busca+numpad no mobile — some no desktop, numpad já fica sempre visível */
+.btn-toggle-numpad {
+    display: none;
+    align-items: center; gap: 6px;
+    background: var(--surface2);
+    color: var(--text); border-radius: 20px;
+    padding: 6px 12px; font-size: 12px; font-weight: 800;
+    letter-spacing: .04em;
+    border: 1px solid var(--border);
+    transition: background .15s, border-color .15s;
+}
+.btn-toggle-numpad.active { background: var(--brand); color: var(--brand-ink); border-color: var(--brand-dark); }
+.btn-toggle-numpad svg { flex-shrink: 0; }
+
+/* Wrapper recolhível (busca + numpad) — sempre aberto no desktop */
+.search-numpad-collapsible { display: contents; }
 
 /* Badge de contagem no botão ITENS */
 .itens-count-badge {
@@ -599,15 +615,15 @@ button:active { transform: scale(.97); }
     display: flex; align-items: center; justify-content: center;
     transition: all .15s;
 }
-.drawer-qty-btn:hover { background: var(--brand); color: white; border-color: var(--brand); }
+.drawer-qty-btn:hover { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
 .drawer-qty-val {
     font-size: 15px; font-weight: 800;
     min-width: 24px; text-align: center;
 }
 .drawer-item-del {
     width: 30px; height: 30px; border-radius: var(--radius-sm);
-    background: #fff0f0; color: #e53e3e;
-    border: 1px solid #fecaca;
+    background: var(--danger-bg); color: var(--danger);
+    border: 1px solid rgba(255, 84, 112, 0.35);
     font-size: 14px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
     transition: all .15s;
@@ -634,36 +650,56 @@ button:active { transform: scale(.97); }
     border-radius: var(--radius-sm); padding: 11px 8px;
     font-size: 12px; font-weight: 800; letter-spacing: .04em;
     transition: all .15s;
+    min-height: var(--tap-min);
 }
 .drawer-btn-nova:hover { background: var(--border); }
 .drawer-btn-cancel {
     flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-    background: #fee2e2; color: var(--danger);
-    border: 1.5px solid #fca5a5;
+    background: var(--danger-bg); color: var(--danger);
+    border: 1.5px solid rgba(255, 84, 112, 0.35);
     border-radius: var(--radius-sm); padding: 11px 8px;
     font-size: 12px; font-weight: 800; letter-spacing: .04em;
     transition: all .15s;
+    min-height: var(--tap-min);
 }
-.drawer-btn-cancel:hover { background: #fecaca; }
+.drawer-btn-cancel:hover { background: rgba(255, 84, 112, 0.2); }
+
+/* Total — o número mais importante da tela, isolado e dominante */
+.drawer-total-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 4px 2px 2px;
+}
+.drawer-total-label {
+    font-size: 13px; font-weight: 600; color: var(--text-sub);
+}
+.drawer-total-value {
+    font-size: 28px; font-weight: 900; color: var(--brand);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
 .drawer-pay-btn {
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    background: var(--brand); color: white;
-    border-radius: var(--radius); padding: 16px;
+    background: var(--brand); color: var(--brand-ink);
+    border-radius: var(--radius); padding: 17px;
     font-size: 16px; font-weight: 900; letter-spacing: .04em;
-    transition: background .15s, opacity .15s;
+    transition: background .15s, opacity .15s, transform .1s;
     width: 100%;
+    min-height: 54px;
+    box-shadow: 0 6px 20px rgba(255, 176, 32, 0.3);
 }
 .drawer-pay-btn:hover:not(:disabled) { background: var(--brand-light); }
-.drawer-pay-btn:disabled { opacity: .4; cursor: not-allowed; }
+.drawer-pay-btn:active:not(:disabled) { transform: scale(.98); }
+.drawer-pay-btn:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; }
 /* ─── Drawer de Reimpressão ────────────────────────────── */
 
 /* Campo de busca reutilizável no header do drawer */
 .itens-search-wrap {
     flex: 1;
     display: flex; align-items: center; gap: 6px;
-    background: white;
+    background: var(--surface2);
     border-radius: 20px; padding: 6px 12px;
-    border: 1px solid #bfdbfe;
+    border: 1px solid var(--border);
 }
 .itens-search-wrap svg { opacity: .75; flex-shrink: 0; color: var(--brand); }
 .itens-search-wrap input {
@@ -708,7 +744,7 @@ button:active { transform: scale(.97); }
 }
 .btn-reimp {
     display: flex; align-items: center; gap: 5px;
-    background: var(--brand); color: white;
+    background: var(--brand); color: var(--brand-ink);
     border-radius: var(--radius-sm); padding: 7px 12px;
     font-size: 11px; font-weight: 800; letter-spacing: .04em;
     flex-shrink: 0; transition: background .15s;
@@ -736,7 +772,7 @@ button:active { transform: scale(.97); }
     border: 1px solid transparent;
     transition: all .15s;
 }
-.reimp-clear-btn:hover { border-color: var(--danger); background: #fff0f0; }
+.reimp-clear-btn:hover { border-color: var(--danger); background: var(--danger-bg); }
 
 /* Busca */
 .search-wrap {
@@ -801,7 +837,7 @@ button:active { transform: scale(.97); }
     display: flex; align-items: center; justify-content: center;
     line-height: 1;
 }
-.cart-qty-btn:hover { background: var(--brand); color: white; }
+.cart-qty-btn:hover { background: var(--brand); color: var(--brand-ink); }
 .cart-qty-val { font-weight: 900; font-size: 14px; width: 24px; text-align: center; }
 .cart-item-del {
     background: none; color: var(--danger); font-size: 16px; padding: 4px;
@@ -896,7 +932,7 @@ button:active { transform: scale(.97); }
 
 .btn-pagamento {
     margin: 8px 12px 12px;
-    background: var(--success);
+    background: var(--success-strong);
     color: white;
     padding: 16px;
     border-radius: var(--radius);
@@ -938,7 +974,7 @@ button:active { transform: scale(.97); }
 }
 .tab-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border-dark); }
 .tab-btn.active {
-    background: var(--brand); color: white;
+    background: var(--brand); color: var(--brand-ink);
     border-color: var(--brand-dark);
     box-shadow: 0 3px 8px rgba(37,99,235,0.15);
     font-weight: 800;
@@ -964,6 +1000,29 @@ button:active { transform: scale(.97); }
     color: var(--text-light); font-weight: 600;
 }
 
+/* Skeleton — carregamento real, distinto do estado "nenhum produto" acima */
+.product-skeleton-grid {
+    grid-column: 1/-1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+}
+.product-skeleton {
+    height: 132px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(100deg, var(--surface) 30%, var(--surface3) 50%, var(--surface) 70%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+    border: 1.5px solid var(--border);
+}
+@media (prefers-reduced-motion: reduce) {
+    .product-skeleton { animation: none; background: var(--surface); }
+}
+@keyframes skeleton-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
 /* Cards de Produtos Premium Táteis */
 .product-card {
     background: var(--surface);
@@ -985,17 +1044,17 @@ button:active { transform: scale(.97); }
 
 .product-icon {
     width: 54px; height: 54px;
-    background: rgba(37, 99, 235, 0.05);
+    background: rgba(255, 176, 32, 0.05);
     border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     color: var(--brand);
-    border: 1px solid rgba(37, 99, 235, 0.1);
+    border: 1px solid rgba(255, 176, 32, 0.1);
     transition: all 0.2s;
 }
 
 .product-card:hover .product-icon {
-    background: rgba(37, 99, 235, 0.08);
-    border-color: rgba(37, 99, 235, 0.15);
+    background: rgba(255, 176, 32, 0.08);
+    border-color: rgba(255, 176, 32, 0.15);
 }
 
 .product-name {
@@ -1012,9 +1071,30 @@ button:active { transform: scale(.97); }
 /* ── MODAL DE PAGAMENTO LUXO VELO ────────────────────── */
 .modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(11, 15, 25, 0.4);
+    background: rgba(0, 0, 0, 0.6);
     display: flex; align-items: center; justify-content: center;
     z-index: 500; backdrop-filter: blur(3px);
+}
+
+.confirm-card {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 90%; max-width: 380px;
+    padding: 28px 24px 20px;
+    display: flex; flex-direction: column; gap: 20px;
+}
+.confirm-message {
+    font-size: 15px; font-weight: 600; line-height: 1.5;
+    color: var(--text);
+}
+.confirm-actions {
+    display: flex; gap: 10px;
+}
+.confirm-actions .btn-voltar,
+.confirm-actions .btn-finalizar {
+    flex: 1; min-height: var(--tap-min);
 }
 
 .payment-card {
@@ -1044,6 +1124,7 @@ button:active { transform: scale(.97); }
     font-size: 46px; font-weight: 900; letter-spacing: -.03em; color: var(--brand);
     margin-top: 6px;
     font-family: var(--font);
+    font-variant-numeric: tabular-nums;
 }
 
 .payment-card-body {
@@ -1082,9 +1163,9 @@ button:active { transform: scale(.97); }
 
 .fast-cash-exact {
     background: var(--brand) !important;
-    color: white !important;
+    color: var(--brand-ink) !important;
     border: 1.5px solid var(--brand-dark) !important;
-    box-shadow: 0 3px 6px rgba(37,99,235,0.15);
+    box-shadow: 0 3px 6px rgba(255, 176, 32, 0.25);
 }
 
 .fast-cash-exact:hover {
@@ -1168,7 +1249,7 @@ button:active { transform: scale(.97); }
 .pay-row-change { 
     color: var(--brand) !important; 
     font-size: 15px; font-weight: 900; 
-    background: rgba(37, 99, 235, 0.02);
+    background: rgba(255, 176, 32, 0.02);
 }
 .pay-row-change span:last-child {
     font-size: 18px;
@@ -1222,38 +1303,33 @@ button:active { transform: scale(.97); }
     border-color: var(--border-dark);
 }
 .btn-finalizar {
-    background: var(--success); color: white;
+    background: var(--success-strong); color: white;
     padding: 14px 28px; border-radius: var(--radius-sm);
     font-size: 15px; font-weight: 900;
-    box-shadow: 0 4px 12px rgba(22,163,74,.18);
+    box-shadow: 0 4px 12px rgba(11,138,95,.3);
     flex: 1;
-    border: 1.5px solid #15803d;
+    border: 1.5px solid #086b49;
+    min-height: var(--tap-min);
 }
-.btn-finalizar:hover { background: #15803d; }
+.btn-finalizar:hover { background: #086b49; }
 
 /* ════════════════════════════════════════════════════════
    TOAST
 ════════════════════════════════════════════════════════ */
 .toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
     background: #1e293b; color: white;
     padding: 12px 24px; border-radius: 30px;
     font-size: 14px; font-weight: 700;
     box-shadow: var(--shadow-lg);
     z-index: 9999;
+    max-width: calc(100vw - 32px);
+    text-align: center;
     animation: toastIn .25s ease;
 }
 @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(12px); } }
 
-/* ── Ícones Lucide nos cards de produto ─────────────── */
-.product-icon {
-    width: 52px; height: 52px;
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-    border-radius: 14px;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--brand);
-    border: 1.5px solid #bfdbfe;
-}
+/* ── Ícones Lucide nos cards de produto (duplicata removida — ver definição única acima) ── */
 .product-icon svg { width: 26px; height: 26px; stroke-width: 1.8; }
 
 /* ════════════════════════════════════════════════════════
@@ -1268,17 +1344,17 @@ button:active { transform: scale(.97); }
 }
 
 .suprimento-header {
-    background: #eff6ff; color: var(--brand);
+    background: var(--surface2); color: var(--brand);
     padding: 24px 28px; text-align: center;
     display: flex; flex-direction: column; align-items: center; gap: 10px;
-    border-bottom: 1px solid #bfdbfe;
+    border-bottom: 1px solid var(--border);
 }
 .suprimento-icon-wrap {
     width: 56px; height: 56px;
-    background: white; color: var(--brand);
+    background: var(--surface2); color: var(--brand);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    border: 1px solid #bfdbfe;
+    border: 1px solid var(--border);
 }
 .suprimento-icon-wrap svg { width: 28px; height: 28px; }
 .suprimento-header h2 { font-size: 20px; font-weight: 900; margin:0; color: var(--brand-dark); }
@@ -1324,7 +1400,7 @@ button:active { transform: scale(.97); }
 .btn-pular:hover { background: var(--border); }
 
 .btn-abrir-cx {
-    background: var(--brand); color: white;
+    background: var(--brand); color: var(--brand-ink);
     padding: 14px; border-radius: var(--radius);
     font-size: 15px; font-weight: 900; letter-spacing: .05em;
     font-family: var(--font);
@@ -1459,7 +1535,7 @@ button:active { transform: scale(.97); }
     font-size: 13px; font-weight: 700; font-family: var(--font);
 }
 .btn-imprimir {
-    background: var(--brand); color: white;
+    background: var(--brand); color: var(--brand-ink);
     padding: 10px 22px; border-radius: var(--radius-sm);
     font-size: 13px; font-weight: 800; font-family: var(--font);
     display: flex; align-items: center; gap: 7px;
@@ -1474,40 +1550,54 @@ button:active { transform: scale(.97); }
     .pdv-left {
         width: 100%; flex-shrink: 0;
         height: auto;
-        max-height: 50vh;
         border-right: none;
         border-bottom: 2px solid var(--border);
     }
 
     .cart-list { max-height: 120px; }
 
-    .numpad-section { padding: 6px 10px; }
-    .numpad-grid button { padding: 10px 6px; font-size: 16px; }
-    .numpad-display { padding: 6px 12px; margin-bottom: 6px; }
+    /* Numpad + busca ficam recolhidos por padrão — expandem sob demanda
+       via o botão QTD, para não empurrar o grid de produtos pra baixo */
+    .btn-toggle-numpad { display: flex; }
+    .search-numpad-collapsible {
+        display: block;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height .25s ease;
+    }
+    .search-numpad-collapsible.expanded {
+        max-height: 360px;
+        overflow-y: auto;
+    }
+
+    .numpad-section { padding: 10px; }
+    .numpad-grid button { padding: 12px 6px; font-size: 17px; min-height: var(--tap-min); }
+    .numpad-display { padding: 8px 12px; margin-bottom: 6px; }
     #numpad-value { font-size: 15px; }
 
-    .cart-resumo { padding: 6px 14px; }
-    .resumo-total-row { font-size: 13px; }
+    /* Redundante com o total já visível na order-bar — economiza espaço */
+    .cart-resumo { display: none; }
 
     .cart-actions-row { padding: 6px 10px 0; }
     .btn-nova, .btn-cancel { padding: 8px 6px; font-size: 11px; }
 
     .btn-pagamento { margin: 6px 10px 8px; padding: 14px; font-size: 16px; }
 
-    .pdv-right { flex: 1; min-height: 45vh; overflow: hidden; }
+    /* Produtos ganham o espaço principal da tela — não é mais "desktop encolhido" */
+    .pdv-right { flex: 1; min-height: 0; overflow: hidden; }
 
     .product-grid {
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 8px; padding: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px; padding: 12px;
     }
-    .product-card { padding: 12px 8px; gap: 6px; }
-    .product-icon { width: 40px; height: 40px; border-radius: 10px; }
-    .product-icon svg { width: 20px; height: 20px; }
-    .product-name { font-size: 11px; }
-    .product-price { font-size: 13px; }
+    .product-card { padding: 14px 10px; gap: 8px; min-height: var(--tap-min); }
+    .product-icon { width: 44px; height: 44px; border-radius: 10px; }
+    .product-icon svg { width: 22px; height: 22px; }
+    .product-name { font-size: 12px; }
+    .product-price { font-size: 13.5px; }
 
-    .subgroup-tabs { padding: 8px 10px; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; }
-    .tab-btn { padding: 7px 14px; font-size: 12px; scroll-snap-align: start; }
+    .subgroup-tabs { padding: 10px; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; }
+    .tab-btn { padding: 9px 16px; font-size: 12.5px; scroll-snap-align: start; min-height: var(--tap-min); }
 
     .pdv-header { height: 46px; padding: 0 12px; }
     .pdv-logo { font-size: 14px; }
@@ -1613,7 +1703,7 @@ button:active { transform: scale(.97); }
     transition: border-color .2s;
 }
 .sangria-motivo-input:focus {
-    border-color: var(--danger); outline: none; background: white;
+    border-color: var(--danger); outline: none; background: var(--surface);
 }
 
 .sangria-actions {
@@ -1654,7 +1744,7 @@ button:active { transform: scale(.97); }
 
 /* ── ESTILOS DE DEVOLUÇÕES E CRÉDITO NEGATIVO ──────── */
 .drawer-item-negative {
-    background: #fff5f5 !important;
+    background: var(--danger-bg) !important;
     border: 1.5px dashed var(--danger) !important;
 }
 .drawer-item-negative .drawer-item-price {
@@ -1684,7 +1774,7 @@ button:active { transform: scale(.97); }
 }
 .devolucao-prod-btn:hover {
     border-color: var(--brand-light);
-    background: #fff8f8;
+    background: var(--danger-bg);
 }
 .devolucao-prod-btn .prod-name {
     font-size: 12px;

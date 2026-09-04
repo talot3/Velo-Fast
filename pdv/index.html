@@ -332,9 +332,24 @@
                             </svg>
                             ITENS
                         </button>
+                        <button class="btn-toggle-numpad" id="btn-toggle-numpad" onclick="toggleNumpadMobile()" title="Digitar quantidade">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="4" y="2" width="16" height="20" rx="2" />
+                                <line x1="8" y1="7" x2="16" y2="7" />
+                                <line x1="8" y1="11" x2="8" y2="11" />
+                                <line x1="12" y1="11" x2="12" y2="11" />
+                                <line x1="16" y1="11" x2="16" y2="11" />
+                            </svg>
+                            QTD
+                        </button>
                         <span id="order-total-label" class="order-total-val">R$ 0,00</span>
                     </div>
                 </div>
+
+                <!-- Busca + Numpad: sempre visíveis no desktop; recolhíveis no mobile -->
+                <div class="search-numpad-collapsible" id="search-numpad-collapsible">
 
                 <!-- Busca -->
                 <div class="search-wrap">
@@ -379,6 +394,7 @@
                         <button class="np-del" onclick="np('DEL')">⌫</button>
                     </div>
                 </div>
+                </div>
 
                 <!-- Resumo -->
                 <div class="cart-resumo">
@@ -409,7 +425,16 @@
 
                 <!-- Grid de produtos -->
                 <div class="product-grid" id="product-grid">
-                    <div class="loading-products">Carregando produtos...</div>
+                    <div class="product-skeleton-grid">
+                        <div class="product-skeleton"></div>
+                        <div class="product-skeleton"></div>
+                        <div class="product-skeleton"></div>
+                        <div class="product-skeleton"></div>
+                        <div class="product-skeleton"></div>
+                        <div class="product-skeleton"></div>
+                        <div class="product-skeleton"></div>
+                        <div class="product-skeleton"></div>
+                    </div>
                 </div>
             </div>
 
@@ -725,6 +750,10 @@
                     </button>
                 </div>
                 <!-- Linha 2: PAGAR -->
+                <div class="drawer-total-row" id="drawer-total-row">
+                    <span class="drawer-total-label">Total a pagar</span>
+                    <span class="drawer-total-value" id="drawer-total-value">R$ 0,00</span>
+                </div>
                 <button class="drawer-pay-btn" id="drawer-pay-btn" onclick="fecharItens(); abrirPagamento();" disabled>
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -739,6 +768,19 @@
 
     <!-- TOAST de confirmação -->
     <div id="toast" class="toast hidden"></div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     MODAL DE CONFIRMAÇÃO (substitui confirm() nativo do navegador)
+═══════════════════════════════════════════════════════ -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="confirm-card">
+            <p class="confirm-message" id="confirm-message"></p>
+            <div class="confirm-actions">
+                <button class="btn-voltar" id="confirm-btn-cancel">Voltar</button>
+                <button class="btn-finalizar" id="confirm-btn-ok">Confirmar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ═══════════════════════════════════════════════════════
      MODAL FECHAMENTO DE CAIXA
