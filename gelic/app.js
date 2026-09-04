@@ -42,7 +42,7 @@ function checkMasterAuth() {
     VeloAuth.requireLogin('admin', () => {
         document.body.classList.add('authenticated');
         loadMasterStores();
-    });
+    }, 'master');
     if (!VeloAuth.getSession()) {
         document.body.classList.remove('authenticated');
         lucide.createIcons();

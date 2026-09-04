@@ -1,5 +1,5 @@
 const { setCors, getStoreId, readBody, handleError } = require('../lib/supabase');
-const { verifyCredentials, issueToken } = require('../lib/auth');
+const { verifyCredentials, verifyGlobalAdminCredentials, issueToken } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
     setCors(res);
@@ -7,13 +7,18 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
     try {
-        const storeId = getStoreId(req);
-        const { username, password } = await readBody(req);
+        const { username, password, scope } = await readBody(req);
         if (!username || !password) {
             return res.status(400).json({ error: 'Usuário e senha são obrigatórios.' });
         }
 
-        const user = await verifyCredentials(storeId, username, password);
+        // scope 'master' = painel gelic, que gerencia todas as empresas e
+        // não pertence a uma loja específica — procura a conta em qualquer
+        // empresa, exigindo papel admin.
+        const user = scope === 'master'
+            ? await verifyGlobalAdminCredentials(username, password)
+            : await verifyCredentials(getStoreId(req), username, password);
+
         if (!user) {
             return res.status(401).json({ error: 'Usuário ou senha inválidos.' });
         }

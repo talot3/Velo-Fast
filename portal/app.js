@@ -426,9 +426,9 @@ function renderDashboard(container) {
         styleEl.innerHTML = `
             /* Efeito tátil de luxo de gravura / folha metálica */
             .rich-kpi-card {
-                background: linear-gradient(135deg, #ffffff 0%, #f6f5f2 100%);
-                border: 1px solid #d5d3ca;
-                border-bottom: 3.5px solid #b5b3aa;
+                background: linear-gradient(135deg, var(--surface) 0%, var(--bg-app) 100%);
+                border: 1px solid var(--border-soft);
+                border-bottom: 3.5px solid var(--border-med);
                 border-radius: 14px;
                 padding: 18px 20px;
                 position: relative;
@@ -437,19 +437,19 @@ function renderDashboard(container) {
                 flex-direction: column;
                 justify-content: space-between;
                 min-height: 125px;
-                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03), 0 10px 15px -3px rgba(35,34,31,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15), 0 10px 15px -3px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.03);
                 transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             }
             .rich-kpi-card:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 8px 16px -2px rgba(35,34,31,0.12), 0 2px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
+                box-shadow: 0 8px 16px -2px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03);
                 border-bottom-width: 4.5px;
             }
             .rich-kpi-title {
                 font-family: 'Plus Jakarta Sans', sans-serif;
                 font-size: 11px;
                 font-weight: 800;
-                color: #5a5955;
+                color: var(--text-sub);
                 text-transform: uppercase;
                 letter-spacing: 0.08em;
                 margin-bottom: 6px;
@@ -461,25 +461,26 @@ function renderDashboard(container) {
                 letter-spacing: -0.05em;
                 line-height: 1;
                 margin-top: 4px;
+                color: var(--text-main);
             }
             /* Texturas de folha e gravação ricas */
             .rich-kpi-value.green-foil {
-                background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+                background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
-                text-shadow: 0.5px 0.5px 0.5px rgba(255,255,255,0.6);
+                text-shadow: none;
             }
             .rich-kpi-value.red-foil {
-                background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+                background: linear-gradient(135deg, #ff5470 0%, #e11d48 100%);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
-                text-shadow: 0.5px 0.5px 0.5px rgba(255,255,255,0.6);
+                text-shadow: none;
             }
             .rich-kpi-value.blue-foil {
-                background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+                background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
-                text-shadow: 0.5px 0.5px 0.5px rgba(255,255,255,0.6);
+                text-shadow: none;
             }
             
             /* Micro-detalhes de acabamento humano */
@@ -493,10 +494,10 @@ function renderDashboard(container) {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background: rgba(0,0,0,0.02);
-                border: 1px dashed rgba(0,0,0,0.1);
+                background: rgba(255,255,255,0.03);
+                border: 1px dashed var(--border-soft);
                 border-radius: 8px;
-                box-shadow: inset 0 1px 1px rgba(0,0,0,0.02);
+                box-shadow: inset 0 1px 1px rgba(0,0,0,0.1);
             }
         `;
         document.head.appendChild(styleEl);
@@ -509,42 +510,42 @@ function renderDashboard(container) {
                 <span class="rich-kpi-title">Faturamento Bruto</span>
                 <span class="rich-kpi-value green-foil">R$ ${totalSalesBruto.toFixed(2)}</span>
                 <div class="micro-emboss-stamp" title="Autenticado Velo">
-                    <i data-lucide="award" style="width:16px; color:#15803d;"></i>
+                    <i data-lucide="award" style="width:16px; color:#34d399;"></i>
                 </div>
             </div>
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Valor Cancelado</span>
                 <span class="rich-kpi-value red-foil">R$ ${totalCancelledSales.toFixed(2)}</span>
                 <div class="micro-emboss-stamp">
-                    <i data-lucide="shield-alert" style="width:16px; color:#b91c1c;"></i>
+                    <i data-lucide="shield-alert" style="width:16px; color:#ff5470;"></i>
                 </div>
             </div>
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Faturamento Líquido</span>
                 <span class="rich-kpi-value blue-foil">R$ ${totalSalesLiquido.toFixed(2)}</span>
                 <div class="micro-emboss-stamp">
-                    <i data-lucide="wallet" style="width:16px; color:#1d4ed8;"></i>
+                    <i data-lucide="wallet" style="width:16px; color:#60a5fa;"></i>
                 </div>
             </div>
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Tickets Válidos</span>
-                <span class="rich-kpi-value" style="color:#2d2c29; text-shadow:0 1px 0 white;">${totalItems}</span>
+                <span class="rich-kpi-value" style="color:var(--text-main);">${totalItems}</span>
                 <div class="micro-emboss-stamp" style="border-radius:4px;">
-                    <i data-lucide="ticket" style="width:16px; color:#5a5955;"></i>
+                    <i data-lucide="ticket" style="width:16px; color:var(--text-sub);"></i>
                 </div>
             </div>
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Tickets Cancelados</span>
-                <span class="rich-kpi-value" style="color:#b91c1c;">${totalCancelledItems}</span>
+                <span class="rich-kpi-value" style="color:#ff5470;">${totalCancelledItems}</span>
                 <div class="micro-emboss-stamp">
-                    <i data-lucide="ban" style="width:16px; color:#b91c1c;"></i>
+                    <i data-lucide="ban" style="width:16px; color:#ff5470;"></i>
                 </div>
             </div>
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Ticket Médio</span>
-                <span class="rich-kpi-value" style="color:#2d2c29; font-weight:900;">R$ ${avgTicket.toFixed(2)}</span>
+                <span class="rich-kpi-value" style="color:var(--text-main); font-weight:900;">R$ ${avgTicket.toFixed(2)}</span>
                 <div class="micro-emboss-stamp">
-                    <i data-lucide="safe" style="width:16px; color:#5a5955;"></i>
+                    <i data-lucide="safe" style="width:16px; color:var(--text-sub);"></i>
                 </div>
             </div>
         </div>
@@ -967,16 +968,16 @@ function renderCatalogue(container) {
         styleEl.innerHTML = `
             /* Container da Grid de Produtos */
             .grid-card-container {
-                border: 1px solid #c8c8c8;
+                border: 1px solid var(--border-soft);
                 border-radius: 4px;
-                background: #ffffff;
+                background: var(--surface);
                 overflow: hidden;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.05);
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             }
             /* Cabeçalho superior Slate Dark */
             .grid-card-title-bar {
-                background: #374151; /* Slate/Dark gray idêntico */
+                background: var(--surface2); /* Slate/Dark gray idêntico */
                 color: #ffffff;
                 padding: 10px 14px;
                 font-size: 13.5px;
@@ -984,7 +985,7 @@ function renderCatalogue(container) {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                border-bottom: 1px solid #1f2937;
+                border-bottom: 1px solid var(--border-med);
                 user-select: none;
             }
             .grid-card-title-bar i, .grid-card-title-bar svg {
@@ -992,8 +993,8 @@ function renderCatalogue(container) {
             }
             /* Painel de agrupamento (caixa branca com borda) */
             .grid-group-dropzone {
-                background: #f5f5f5;
-                border-bottom: 1px solid #dcdcdc;
+                background: var(--bg-app);
+                border-bottom: 1px solid var(--border-soft);
                 padding: 6px 12px;
                 display: flex;
                 align-items: center;
@@ -1001,13 +1002,13 @@ function renderCatalogue(container) {
                 min-height: 38px;
             }
             .grid-group-pill {
-                background: #ffffff;
-                border: 1px solid #d3d3d3;
+                background: var(--surface);
+                border: 1px solid var(--border-soft);
                 border-radius: 2px;
                 padding: 4px 10px;
                 font-size: 11px;
                 font-weight: 500;
-                color: #333333;
+                color: var(--text-main);
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
@@ -1016,22 +1017,22 @@ function renderCatalogue(container) {
                 user-select: none;
             }
             .grid-group-pill:hover {
-                background: #eaeaea;
+                background: var(--hover-overlay);
             }
 
             /* Tabela da Grid */
             .tree-table {
                 width: 100%;
                 border-collapse: collapse;
-                background: #ffffff;
+                background: var(--surface);
             }
             .tree-table th {
-                background: #ffffff;
-                border: 1px solid #d3d3d3;
+                background: var(--surface);
+                border: 1px solid var(--border-soft);
                 padding: 6px 10px;
                 font-size: 12px;
                 font-weight: 600;
-                color: #333333;
+                color: var(--text-main);
                 text-align: left;
                 vertical-align: middle;
                 user-select: none;
@@ -1050,7 +1051,7 @@ function renderCatalogue(container) {
             }
             .th-content i, .th-content svg {
                 width: 12px; height: 12px;
-                color: #8c8c8c;
+                color: var(--text-sub);
             }
 
             /* Botão de ocultar coluna no cabeçalho */
@@ -1060,7 +1061,7 @@ function renderCatalogue(container) {
                 cursor: pointer;
                 opacity: 0;
                 transition: opacity 0.2s;
-                color: #a0a0a0;
+                color: var(--text-sub);
                 font-size: 9px;
                 border: none; background: transparent;
                 padding: 1px;
@@ -1081,23 +1082,23 @@ function renderCatalogue(container) {
                 cursor: grabbing;
             }
             .tree-table th.drag-over {
-                background: #eff6ff;
+                background: rgba(96, 165, 250, 0.12);
                 border-left: 3px solid #3b82f6;
                 border-right: 3px solid #3b82f6;
             }
             .tree-table th.dragging {
                 opacity: 0.4;
-                background: #f1f5f9;
+                background: var(--accent);
             }
 
             /* Zona de remoção de colunas */
             .col-remove-zone {
-                border: 2px dashed #cbd5e1;
+                border: 2px dashed var(--border-med);
                 border-radius: 6px;
                 padding: 6px 14px;
                 font-size: 11px;
                 font-weight: 600;
-                color: #94a3b8;
+                color: var(--text-sub);
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
@@ -1107,14 +1108,14 @@ function renderCatalogue(container) {
             }
             .col-remove-zone.drag-active {
                 border-color: #ef4444;
-                background: #fef2f2;
+                background: var(--danger-bg, rgba(255,84,112,0.12));
                 color: #ef4444;
             }
 
             /* Linha de Filtros por Coluna */
             .filter-row td {
-                background: #ffffff;
-                border: 1px solid #d3d3d3;
+                background: var(--surface);
+                border: 1px solid var(--border-soft);
                 padding: 4px 6px;
             }
             .filter-input-wrapper {
@@ -1127,51 +1128,51 @@ function renderCatalogue(container) {
                 position: absolute;
                 left: 6px;
                 width: 11px; height: 11px;
-                color: #a0a0a0;
+                color: var(--text-sub);
                 pointer-events: none;
             }
             .grid-filter-input {
                 width: 100%;
-                border: 1px solid #cccccc;
+                border: 1px solid var(--border-med);
                 border-radius: 2px;
                 padding: 3px 6px 3px 20px;
                 font-size: 11px;
                 font-weight: 500;
-                color: #333333;
+                color: var(--text-main);
                 outline: none;
-                background: #ffffff;
+                background: var(--surface);
             }
             .grid-filter-input:focus {
                 border-color: #3b82f6;
             }
             .grid-filter-select {
                 width: 100%;
-                border: 1px solid #cccccc;
+                border: 1px solid var(--border-med);
                 border-radius: 2px;
                 padding: 3px 20px 3px 6px;
                 font-size: 11px;
                 font-weight: 500;
-                color: #333333;
+                color: var(--text-main);
                 outline: none;
-                background: #ffffff;
+                background: var(--surface);
                 cursor: pointer;
             }
 
             /* Linha de Produto (Estilo flat DevExpress de alta fidelidade) */
             .product-row {
                 cursor: pointer;
-                background: #ffffff;
-                color: #333333;
+                background: var(--surface);
+                color: var(--text-main);
             }
             .product-row:nth-child(even) {
-                background: #f9f9f9;
+                background: var(--accent);
             }
             .product-row td {
                 padding: 6px 10px;
                 font-size: 11.5px;
                 font-weight: 500;
-                border: 1px solid #e0e0e0;
-                color: #333333;
+                border: 1px solid var(--border-soft);
+                color: var(--text-main);
             }
             
             /* Linha ativa selecionada em azul sólido com texto branco absoluto */
@@ -1196,7 +1197,7 @@ function renderCatalogue(container) {
                 display: inline-flex; align-items: center; gap: 4px;
             }
             .column-toggle-pill.active {
-                background: #eff6ff; color: #1d4ed8; border-color: #93c5fd;
+                background: rgba(96, 165, 250, 0.12); color: #1d4ed8; border-color: #93c5fd;
             }
         `;
         document.head.appendChild(styleEl);
@@ -5484,7 +5485,7 @@ function renderBorderoDetail(container, id) {
 
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <button class="btn-cancel" style="padding:8px 16px; font-weight:800; display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid var(--border);" 
+            <button class="btn-cancel" style="padding:8px 16px; font-weight:800; display:inline-flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--border);" 
                 onclick="backToBorderos()">
                 <i data-lucide="arrow-left" style="width:16px;"></i> Voltar
             </button>
@@ -5897,7 +5898,7 @@ window.openCargoModal = function(id = null) {
         const itemRows = itens.map(i => {
             const checked = item.permissoes[i.key] ? 'checked' : '';
             return `
-                <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 16px; border-bottom:1px solid #f1f5f9; background:#fff;">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 16px; border-bottom:1px solid var(--border-soft); background:var(--surface);">
                     <span style="font-size:12px; font-weight:700; color:var(--text-sub);">${i.label}</span>
                     <input type="checkbox" id="perm-${i.key}" ${checked} style="width:18px; height:18px; cursor:pointer;">
                 </div>
@@ -6025,8 +6026,8 @@ window.renderReportDrePersonalizada = function(container) {
                 }
             }
             .dre-card-left {
-                background: linear-gradient(135deg, #ffffff 0%, #faf9f6 100%);
-                border: 1px solid #dcdad0;
+                background: linear-gradient(135deg, var(--surface) 0%, var(--bg-app) 100%);
+                border: 1px solid var(--border-soft);
                 border-radius: 16px;
                 box-shadow: 0 10px 30px rgba(50, 48, 44, 0.08), inset 0 1px 0 rgba(255,255,255,0.9);
                 padding: 24px;
@@ -6039,14 +6040,14 @@ window.renderReportDrePersonalizada = function(container) {
                 align-items: center;
                 justify-content: space-between;
                 margin-bottom: 20px;
-                border-bottom: 1px dashed #e5e3d9;
+                border-bottom: 1px dashed var(--border-soft);
                 padding-bottom: 14px;
             }
             .dre-card-title {
                 font-family: 'Plus Jakarta Sans', sans-serif;
                 font-size: 14px;
                 font-weight: 800;
-                color: #2c2b29;
+                color: var(--text-main);
                 letter-spacing: -0.01em;
             }
             .dre-pill-btn {
@@ -6086,21 +6087,21 @@ window.renderReportDrePersonalizada = function(container) {
                 background: transparent;
                 border: none;
                 cursor: pointer;
-                color: #8c8a82;
+                color: var(--text-sub);
                 display: flex;
                 padding: 4px;
                 border-radius: 50%;
                 transition: background 0.2s;
             }
             .dre-close-btn:hover {
-                background: #f1efe8;
-                color: #2c2b29;
+                background: var(--hover-overlay);
+                color: var(--text-main);
             }
             .dre-form-control {
-                background: #fff;
-                border: 1px solid #c8c6bc;
+                background: var(--surface);
+                border: 1px solid var(--border-med);
                 border-radius: 8px;
-                color: #2c2b29;
+                color: var(--text-main);
                 font-family: inherit;
                 font-size: 13px;
                 font-weight: 600;
@@ -6120,7 +6121,7 @@ window.renderReportDrePersonalizada = function(container) {
                 gap: 8px;
                 font-size: 12px;
                 font-weight: 700;
-                color: #5c5a53;
+                color: var(--text-sub);
                 cursor: pointer;
                 user-select: none;
             }
@@ -6132,8 +6133,8 @@ window.renderReportDrePersonalizada = function(container) {
 
             /* Tree Table Estilo Premium */
             .dre-table-card {
-                background: linear-gradient(135deg, #ffffff 0%, #faf9f6 100%);
-                border: 1px solid #dcdad0;
+                background: linear-gradient(135deg, var(--surface) 0%, var(--bg-app) 100%);
+                border: 1px solid var(--border-soft);
                 border-radius: 16px;
                 box-shadow: 0 6px 20px rgba(50, 48, 44, 0.04);
                 overflow: hidden;
@@ -6144,8 +6145,8 @@ window.renderReportDrePersonalizada = function(container) {
                 margin: 0;
             }
             .dre-tree-table th {
-                background: #f3f1e9;
-                color: #5c5a53;
+                background: var(--accent);
+                color: var(--text-sub);
                 font-family: 'Plus Jakarta Sans', sans-serif;
                 font-size: 11px;
                 font-weight: 800;
@@ -6153,18 +6154,18 @@ window.renderReportDrePersonalizada = function(container) {
                 letter-spacing: 0.05em;
                 padding: 12px 18px;
                 text-align: left;
-                border-bottom: 1px solid #dcdad0;
+                border-bottom: 1px solid var(--border-soft);
             }
             .dre-row {
-                border-bottom: 1px solid #f1efe8;
+                border-bottom: 1px solid var(--border-soft);
                 transition: background-color 0.2s ease;
                 cursor: pointer;
             }
             .dre-row:hover {
-                background-color: #f5f4ed !important;
+                background-color: var(--hover-overlay) !important;
             }
             .dre-row.header-level {
-                background: #eae8df;
+                background: var(--accent);
             }
             .dre-row.header-level td {
                 padding-top: 14px;
@@ -6174,14 +6175,14 @@ window.renderReportDrePersonalizada = function(container) {
                 font-family: 'Plus Jakarta Sans', sans-serif;
                 font-size: 13px;
                 font-weight: 900;
-                color: #1e2025; /* Grafite sofisticado */
+                color: var(--text-main);
                 text-transform: uppercase;
                 letter-spacing: 0.04em;
             }
             .dre-row.header-level .val-cell,
             .dre-row.header-level .pct-cell {
                 font-weight: 900;
-                color: #1e2025;
+                color: var(--text-main);
             }
             .dre-row.bold-row td {
                 font-weight: 800;
@@ -6190,7 +6191,7 @@ window.renderReportDrePersonalizada = function(container) {
                 display: inline-block;
                 width: 24px;
                 height: 18px;
-                border-right: 1px solid rgba(200, 198, 188, 0.4);
+                border-right: 1px solid var(--border-soft);
                 margin-right: 8px;
                 vertical-align: middle;
             }
@@ -6201,19 +6202,19 @@ window.renderReportDrePersonalizada = function(container) {
                 justify-content: center;
                 width: 20px;
                 height: 20px;
-                color: #8c8a82;
+                color: var(--text-sub);
                 margin-right: 4px;
                 border-radius: 4px;
                 transition: all 0.2s;
             }
             .dre-toggle-icon:hover {
-                background: rgba(0,0,0,0.05);
-                color: #2c2b29;
+                background: var(--hover-overlay);
+                color: var(--text-main);
             }
             .desc-cell {
                 font-size: 13px;
                 font-weight: 600;
-                color: #2c2b29;
+                color: var(--text-main);
                 padding: 10px 18px;
                 display: flex;
                 align-items: center;
@@ -6221,13 +6222,13 @@ window.renderReportDrePersonalizada = function(container) {
             .val-cell {
                 font-size: 13px;
                 font-weight: 700;
-                color: #2c2b29;
+                color: var(--text-main);
                 padding: 10px 18px;
             }
             .pct-cell {
                 font-size: 12px;
                 font-weight: 700;
-                color: #8c8a82;
+                color: var(--text-sub);
                 padding: 10px 18px;
             }
             .actions-cell {
@@ -6238,7 +6239,7 @@ window.renderReportDrePersonalizada = function(container) {
                 background: transparent;
                 border: none;
                 cursor: pointer;
-                color: #a8a69e;
+                color: var(--text-sub);
                 padding: 4px;
                 border-radius: 6px;
                 display: inline-flex;
@@ -6247,12 +6248,12 @@ window.renderReportDrePersonalizada = function(container) {
                 transition: all 0.2s;
             }
             .action-btn-minimal:hover {
-                background: #fdf2f2;
-                color: #ef4444;
+                background: var(--danger-bg, rgba(255,84,112,0.12));
+                color: var(--danger);
             }
             .action-btn-minimal.edit:hover {
-                background: #eff6ff;
-                color: #3b82f6;
+                background: rgba(96,165,250,0.12);
+                color: #60a5fa;
             }
             .dre-badge-indicator {
                 font-size: 10px;
@@ -6269,22 +6270,22 @@ window.renderReportDrePersonalizada = function(container) {
             .dre-badge-indicator.plus {
                 background: rgba(16, 185, 129, 0.12);
                 border: 1px solid rgba(16, 185, 129, 0.25);
-                color: #047857;
+                color: #34d399;
             }
             .dre-badge-indicator.minus {
                 background: rgba(239, 68, 68, 0.12);
                 border: 1px solid rgba(239, 68, 68, 0.25);
-                color: #b91c1c;
+                color: #ff5470;
             }
             .dre-badge-indicator.equals {
                 background: rgba(59, 130, 246, 0.12);
                 border: 1px solid rgba(59, 130, 246, 0.25);
-                color: #1d4ed8;
+                color: #60a5fa;
             }
             .dre-progress-bar-container {
                 width: 100%;
                 height: 4px;
-                background: #e5e3d9;
+                background: var(--border-soft);
                 border-radius: 2px;
                 overflow: hidden;
                 margin-top: 4px;
@@ -6503,13 +6504,13 @@ function renderDreLeftForm(line, parentOpts) {
                 </div>
 
                 <!-- Tabela de Planos Vinculados -->
-                <div style="border: 1px solid #dcdad0; border-radius: 8px; overflow: hidden; background: #fff; max-height: 200px; overflow-y: auto; margin-top: 10px;">
+                <div style="border: 1px solid var(--border-soft); border-radius: 8px; overflow: hidden; background: var(--surface); max-height: 200px; overflow-y: auto; margin-top: 10px;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                         <thead>
-                            <tr style="background: #f3f1e9; border-bottom: 1px solid #dcdad0; text-align: left;">
-                                <th style="padding: 8px; font-weight: 800; color: #5c5a53;">Nome</th>
-                                <th style="padding: 8px; font-weight: 800; color: #5c5a53;">Tp. Data</th>
-                                <th style="padding: 8px; font-weight: 800; color: #5c5a53;">Tp. Valor</th>
+                            <tr style="background: var(--accent); border-bottom: 1px solid var(--border-soft); text-align: left;">
+                                <th style="padding: 8px; font-weight: 800; color: var(--text-sub);">Nome</th>
+                                <th style="padding: 8px; font-weight: 800; color: var(--text-sub);">Tp. Data</th>
+                                <th style="padding: 8px; font-weight: 800; color: var(--text-sub);">Tp. Valor</th>
                                 <th style="padding: 8px; width: 40px; text-align: center;">Ativo</th>
                                 <th style="padding: 8px; width: 40px; text-align: center;"></th>
                             </tr>
@@ -6626,8 +6627,8 @@ window.renderDrePlanoContasRulesTable = function() {
         return `
             <tr style="border-bottom: 1px solid #f1efe8;">
                 <td style="padding: 8px; font-weight: 700; color: #2c2b29;">${r.name}</td>
-                <td style="padding: 8px; color: #5c5a53;">${r.tpData}</td>
-                <td style="padding: 8px; color: #5c5a53;">${r.tpValor}</td>
+                <td style="padding: 8px; color: var(--text-sub);">${r.tpData}</td>
+                <td style="padding: 8px; color: var(--text-sub);">${r.tpValor}</td>
                 <td style="padding: 8px; text-align: center;">
                     <input type="checkbox" onchange="toggleDrePlanoContasRuleActive(${r.id}, this.checked)" ${checked} style="cursor: pointer;">
                 </td>
@@ -6859,7 +6860,7 @@ function renderDreTreeTable() {
             if (node.showPercent) {
                 const fillCol = node.description.includes('(-)') ? '#ef4444' : '#3b82f6';
                 pctContent = `
-                    <div style="font-size:12px; font-weight:700; color:#5c5a53;">${node.percent.toFixed(2)}%</div>
+                    <div style="font-size:12px; font-weight:700; color:var(--text-sub);">${node.percent.toFixed(2)}%</div>
                     <div class="dre-progress-bar-container">
                         <div class="dre-progress-fill" style="width: ${Math.min(100, Math.max(0, node.percent)) || 0}%; background: ${fillCol};"></div>
                     </div>
@@ -6915,26 +6916,26 @@ window.renderReportFluxoCaixa = function(container) {
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Saldo Inicial consolidado</span>
                 <span class="rich-kpi-value blue-foil">R$ 5.000,00</span>
-                <div class="micro-emboss-stamp"><i data-lucide="wallet" style="width:16px; color:#1d4ed8;"></i></div>
+                <div class="micro-emboss-stamp"><i data-lucide="wallet" style="width:16px; color:#60a5fa;"></i></div>
             </div>
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Total de Entradas (Recebido)</span>
                 <span class="rich-kpi-value green-foil">R$ 25.450,00</span>
-                <div class="micro-emboss-stamp"><i data-lucide="trending-up" style="width:16px; color:#15803d;"></i></div>
+                <div class="micro-emboss-stamp"><i data-lucide="trending-up" style="width:16px; color:#34d399;"></i></div>
             </div>
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Total de Saídas (Pago)</span>
                 <span class="rich-kpi-value red-foil">R$ 14.150,00</span>
-                <div class="micro-emboss-stamp"><i data-lucide="trending-down" style="width:16px; color:#b91c1c;"></i></div>
+                <div class="micro-emboss-stamp"><i data-lucide="trending-down" style="width:16px; color:#ff5470;"></i></div>
             </div>
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Saldo Final Previsto</span>
                 <span class="rich-kpi-value green-foil" style="font-weight:900;">R$ 16.300,00</span>
-                <div class="micro-emboss-stamp"><i data-lucide="check-circle" style="width:16px; color:#15803d;"></i></div>
+                <div class="micro-emboss-stamp"><i data-lucide="check-circle" style="width:16px; color:#34d399;"></i></div>
             </div>
         </div>
         <div class="glass-card" style="padding:24px;">
-            <h4 style="font-family:'Plus Jakarta Sans', sans-serif; font-size:14px; font-weight:800; color:#2c2b29; margin-bottom:16px; text-transform:uppercase; letter-spacing:0.02em;">Extrato do Período</h4>
+            <h4 style="font-family:'Plus Jakarta Sans', sans-serif; font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:16px; text-transform:uppercase; letter-spacing:0.02em;">Extrato do Período</h4>
             <table class="modern-table" style="margin:0;">
                 <thead>
                     <tr>
@@ -6992,13 +6993,13 @@ window.renderReportPontoEquilibrio = function(container) {
         </div>
         <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:24px; align-items:start;">
             <div class="rich-kpi-card" style="min-height:auto; padding:24px; display:flex; flex-direction:column; gap:16px;">
-                <h4 style="font-family:'Plus Jakarta Sans', sans-serif; font-size:12px; font-weight:900; color:#5a5955; text-transform:uppercase; letter-spacing:0.08em; border-bottom:1px dashed #d5d3ca; padding-bottom:8px; margin:0;">Variáveis de Cálculo</h4>
+                <h4 style="font-family:'Plus Jakarta Sans', sans-serif; font-size:12px; font-weight:900; color:var(--text-sub); text-transform:uppercase; letter-spacing:0.08em; border-bottom:1px dashed var(--border-soft); padding-bottom:8px; margin:0;">Variáveis de Cálculo</h4>
                 <div>
-                    <label style="font-size:11px; font-weight:800; color:#8c8a82; text-transform:uppercase; margin-bottom:6px; display:block;">Custos Fixos Totais (R$)</label>
+                    <label style="font-size:11px; font-weight:800; color:var(--text-sub); text-transform:uppercase; margin-bottom:6px; display:block;">Custos Fixos Totais (R$)</label>
                     <input type="number" class="dre-form-control" id="pe-custo-fixo" value="14150.00" oninput="recalculatePE()">
                 </div>
                 <div>
-                    <label style="font-size:11px; font-weight:800; color:#8c8a82; text-transform:uppercase; margin-bottom:6px; display:block;">Margem de Contribuição (%)</label>
+                    <label style="font-size:11px; font-weight:800; color:var(--text-sub); text-transform:uppercase; margin-bottom:6px; display:block;">Margem de Contribuição (%)</label>
                     <input type="number" class="dre-form-control" id="pe-margem" value="65.0" oninput="recalculatePE()">
                 </div>
             </div>
@@ -7006,7 +7007,7 @@ window.renderReportPontoEquilibrio = function(container) {
                 <span class="rich-kpi-title" style="font-size:13px; margin-bottom:12px;">Faturamento Mínimo Necessário (Meta PE)</span>
                 <span class="rich-kpi-value blue-foil" id="pe-resultado-faturamento" style="font-size:38px;">R$ 21.769,23</span>
                 <p style="font-size:12px; color:var(--text-sub); max-width:320px; margin-top:16px; font-weight:600; line-height:1.5;">Com custos fixos de R$ <span id="lbl-custo-fixo">14.150,00</span> e margem de <span id="lbl-margem">65</span>%, sua empresa entra em ponto de equilíbrio ao faturar o valor acima.</p>
-                <div class="micro-emboss-stamp" style="bottom:16px; right:16px;"><i data-lucide="scale" style="width:18px; color:#1d4ed8;"></i></div>
+                <div class="micro-emboss-stamp" style="bottom:16px; right:16px;"><i data-lucide="scale" style="width:18px; color:#60a5fa;"></i></div>
             </div>
         </div>
     `;
@@ -7050,7 +7051,7 @@ window.renderReportDreGerencial = function(container) {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="dre-row bold-row" style="background:#eae8df;">
+                    <tr class="dre-row bold-row" style="background:var(--accent);">
                         <td class="desc-cell">(=) RECEITA BRUTA DE VENDAS</td>
                         <td class="val-cell">R$ 25.450,00</td>
                         <td class="pct-cell">100,00%</td>
@@ -7085,7 +7086,7 @@ window.renderReportDreGerencial = function(container) {
                         <td class="val-cell" style="color:var(--danger);">- R$ 1.300,00</td>
                         <td class="pct-cell">5,11%</td>
                     </tr>
-                    <tr class="dre-row bold-row" style="background:#eae8df;">
+                    <tr class="dre-row bold-row" style="background:var(--accent);">
                         <td class="desc-cell">(=) RESULTADO LÍQUIDO DO PERÍODO (LUCRO)</td>
                         <td class="val-cell" style="color:var(--success);">R$ 11.300,00</td>
                         <td class="pct-cell">44,40%</td>
@@ -7104,7 +7105,7 @@ window.renderReportBalancoPatrimonial = function(container) {
                 <h3 style="font-weight:800; letter-spacing:-0.03em;">Balanço Patrimonial</h3>
                 <p style="font-size:13px; color:var(--text-sub); margin-top:4px;">Demonstrativo consolidado de Ativos, Passivos e Patrimônio Líquido.</p>
             </div>
-            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #047857; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: 20px; display: flex; align-items: center; gap: 6px;">
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #34d399; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: 20px; display: flex; align-items: center; gap: 6px;">
                 <i data-lucide="check-circle" style="width: 14px;"></i> Equação Ativa: Ativo = Passivo + PL
             </div>
         </div>
@@ -7120,7 +7121,7 @@ window.renderReportBalancoPatrimonial = function(container) {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="dre-row bold-row" style="background:#eae8df;">
+                        <tr class="dre-row bold-row" style="background:var(--accent);">
                             <td class="desc-cell">1. ATIVO CIRCULANTE</td>
                             <td class="val-cell" style="text-align: right;">R$ 23.350,00</td>
                         </tr>
@@ -7136,7 +7137,7 @@ window.renderReportBalancoPatrimonial = function(container) {
                             <td class="desc-cell" style="padding-left:28px;">Estoques de Mercadorias</td>
                             <td class="val-cell" style="text-align: right;">R$ 3.500,00</td>
                         </tr>
-                        <tr class="dre-row bold-row" style="background:#eae8df;">
+                        <tr class="dre-row bold-row" style="background:var(--accent);">
                             <td class="desc-cell">2. ATIVO NÃO CIRCULANTE (Realizável a Longo Prazo)</td>
                             <td class="val-cell" style="text-align: right;">R$ 15.000,00</td>
                         </tr>
@@ -7144,7 +7145,7 @@ window.renderReportBalancoPatrimonial = function(container) {
                             <td class="desc-cell" style="padding-left:28px;">Imobilizado (Equipamentos e Ti)</td>
                             <td class="val-cell" style="text-align: right;">R$ 15.000,00</td>
                         </tr>
-                        <tr class="dre-row bold-row" style="background:#eae8df;">
+                        <tr class="dre-row bold-row" style="background:var(--accent);">
                             <td class="desc-cell">TOTAL DO ATIVO</td>
                             <td class="val-cell" style="text-align: right; color:var(--brand); font-size:15px;">R$ 38.350,00</td>
                         </tr>
@@ -7162,7 +7163,7 @@ window.renderReportBalancoPatrimonial = function(container) {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="dre-row bold-row" style="background:#eae8df;">
+                        <tr class="dre-row bold-row" style="background:var(--accent);">
                             <td class="desc-cell">3. PASSIVO CIRCULANTE (Curto Prazo)</td>
                             <td class="val-cell" style="text-align: right;">R$ 10.750,00</td>
                         </tr>
@@ -7178,7 +7179,7 @@ window.renderReportBalancoPatrimonial = function(container) {
                             <td class="desc-cell" style="padding-left:28px;">Obrigações Tributárias (Impostos)</td>
                             <td class="val-cell" style="text-align: right;">R$ 3.250,00</td>
                         </tr>
-                        <tr class="dre-row bold-row" style="background:#eae8df;">
+                        <tr class="dre-row bold-row" style="background:var(--accent);">
                             <td class="desc-cell">4. PASSIVO NÃO CIRCULANTE (Longo Prazo)</td>
                             <td class="val-cell" style="text-align: right;">R$ 3.000,00</td>
                         </tr>
@@ -7198,7 +7199,7 @@ window.renderReportBalancoPatrimonial = function(container) {
                             <td class="desc-cell" style="padding-left:28px;">Lucros ou Prejuízos Acumulados</td>
                             <td class="val-cell" style="text-align: right; color:var(--success);">R$ 4.600,00</td>
                         </tr>
-                        <tr class="dre-row bold-row" style="background:#eae8df;">
+                        <tr class="dre-row bold-row" style="background:var(--accent);">
                             <td class="desc-cell">TOTAL DO PASSIVO E PL</td>
                             <td class="val-cell" style="text-align: right; color:var(--brand); font-size:15px;">R$ 38.350,00</td>
                         </tr>

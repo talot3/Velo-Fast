@@ -5,7 +5,20 @@
 (function () {
     const STORAGE_KEY = 'velofast_auth';
     const QUEUE_KEY = 'velofast_pending_queue';
+    const STORE_KEY = 'velofast_store_id';
     const ROLE_LEVEL = { operador: 1, supervisor: 2, admin: 3 };
+
+    // Qual empresa este terminal/dispositivo usa. Definido uma vez via URL
+    // (ex.: portal/index.html?store=15521) e lembrado depois — cada local
+    // físico acessa sua própria empresa pela sua própria URL/atalho.
+    (function initStoreId() {
+        const fromUrl = new URLSearchParams(location.search).get('store');
+        if (fromUrl) localStorage.setItem(STORE_KEY, fromUrl.trim());
+    })();
+
+    function getStoreId() {
+        return localStorage.getItem(STORE_KEY) || null;
+    }
 
     function decodeJwtPayload(token) {
         try {
@@ -44,14 +57,20 @@
         const session = getSession();
         const headers = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
         if (session && session.token) headers['Authorization'] = 'Bearer ' + session.token;
+        const storeId = getStoreId();
+        if (storeId) headers['X-Store-Id'] = storeId;
         return headers;
     }
 
-    async function login(username, password) {
+    async function login(username, password, scope) {
+        const headers = { 'Content-Type': 'application/json' };
+        const storeId = getStoreId();
+        // Login global (gelic) não é de uma loja específica — não envia X-Store-Id.
+        if (storeId && scope !== 'master') headers['X-Store-Id'] = storeId;
         const res = await fetch('/api/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            headers,
+            body: JSON.stringify({ username, password, scope })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Falha no login');
@@ -73,7 +92,7 @@
         return overlay;
     }
 
-    function showLoginOverlay(minRole, onSuccess) {
+    function showLoginOverlay(minRole, onSuccess, scope) {
         if (document.getElementById('velofast-auth-overlay')) return;
         const overlay = buildOverlay('velofast-auth-overlay', 99999);
         overlay.innerHTML =
@@ -83,7 +102,7 @@
             '<input id="velofast-auth-user" placeholder="Usuário" autocomplete="username" style="width:100%;padding:10px 12px;margin-bottom:10px;border-radius:8px;border:1px solid #333;background:#0e0f13;color:#fff;box-sizing:border-box;">' +
             '<input id="velofast-auth-pass" type="password" placeholder="Senha" autocomplete="current-password" style="width:100%;padding:10px 12px;margin-bottom:14px;border-radius:8px;border:1px solid #333;background:#0e0f13;color:#fff;box-sizing:border-box;">' +
             '<div id="velofast-auth-error" style="color:#ff6b6b;font-size:12px;min-height:16px;margin-bottom:8px;"></div>' +
-            '<button type="submit" style="width:100%;padding:11px;border:0;border-radius:8px;background:#4f7cff;color:#fff;font-weight:600;cursor:pointer;">Entrar</button>' +
+            '<button type="submit" style="width:100%;padding:11px;border:0;border-radius:8px;background:#ffb020;color:#1a1002;font-weight:700;cursor:pointer;">Entrar</button>' +
             '</form>';
         document.body.appendChild(overlay);
 
@@ -94,7 +113,7 @@
             const errBox = document.getElementById('velofast-auth-error');
             errBox.textContent = '';
             try {
-                const loggedUser = await login(user, pass);
+                const loggedUser = await login(user, pass, scope);
                 if (!hasRole(loggedUser.role, minRole)) {
                     errBox.textContent = 'Este usuário não tem permissão para acessar esta área.';
                     clearSession();
@@ -108,13 +127,13 @@
         });
     }
 
-    function requireLogin(minRole, onReady) {
+    function requireLogin(minRole, onReady, scope) {
         const session = getSession();
         if (session && hasRole(session.role, minRole)) {
             onReady(session);
             return;
         }
-        showLoginOverlay(minRole, onReady);
+        showLoginOverlay(minRole, onReady, scope);
     }
 
     /**
@@ -135,7 +154,7 @@
                 '<div id="velofast-elevate-error" style="color:#ff6b6b;font-size:12px;min-height:14px;margin-bottom:6px;"></div>' +
                 '<div style="display:flex;gap:8px;">' +
                 '<button type="button" id="velofast-elevate-cancel" style="flex:1;padding:9px;border:0;border-radius:8px;background:#2a2d34;color:#fff;cursor:pointer;">Cancelar</button>' +
-                '<button type="submit" style="flex:1;padding:9px;border:0;border-radius:8px;background:#4f7cff;color:#fff;font-weight:600;cursor:pointer;">Autorizar</button>' +
+                '<button type="submit" style="flex:1;padding:9px;border:0;border-radius:8px;background:#ffb020;color:#1a1002;font-weight:700;cursor:pointer;">Autorizar</button>' +
                 '</div></form>';
             document.body.appendChild(overlay);
 
@@ -152,7 +171,7 @@
                 try {
                     const res = await fetch('/api/login', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: authHeaders(),
                         body: JSON.stringify({ username: user, password: pass })
                     });
                     const data = await res.json();
@@ -242,6 +261,7 @@
 
     window.VeloAuth = {
         getSession, setSession, clearSession, authHeaders, login,
-        requireLogin, elevate, postJSON, flushQueue, getQueueLength: () => getQueue().length
+        requireLogin, elevate, postJSON, flushQueue, getQueueLength: () => getQueue().length,
+        getStoreId, setStoreId: (id) => localStorage.setItem(STORE_KEY, id)
     };
 })();
