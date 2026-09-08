@@ -87,7 +87,7 @@
         const overlay = document.createElement('div');
         overlay.id = id;
         overlay.style.cssText =
-            'position:fixed;inset:0;z-index:' + zIndex + ';background:rgba(10,10,15,.92);' +
+            'position:fixed;inset:0;z-index:' + zIndex + ';background:rgba(9,9,11,.92);' +
             'display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;';
         return overlay;
     }
@@ -96,13 +96,13 @@
         if (document.getElementById('velofast-auth-overlay')) return;
         const overlay = buildOverlay('velofast-auth-overlay', 99999);
         overlay.innerHTML =
-            '<form id="velofast-auth-form" style="background:#16181d;padding:32px;border-radius:14px;width:min(320px,90vw);box-shadow:0 10px 40px rgba(0,0,0,.5);">' +
+            '<form id="velofast-auth-form" style="background:#18181b;padding:32px;border-radius:8px;border:1px solid #27272a;width:min(320px,90vw);box-shadow:0 10px 40px rgba(0,0,0,.5);">' +
             '<h2 style="color:#fff;margin:0 0 4px;font-size:18px;">VELO FAST</h2>' +
             '<p style="color:#9aa0a6;margin:0 0 20px;font-size:13px;">Entre para continuar</p>' +
-            '<input id="velofast-auth-user" placeholder="Usuário" autocomplete="username" style="width:100%;padding:10px 12px;margin-bottom:10px;border-radius:8px;border:1px solid #333;background:#0e0f13;color:#fff;box-sizing:border-box;">' +
-            '<input id="velofast-auth-pass" type="password" placeholder="Senha" autocomplete="current-password" style="width:100%;padding:10px 12px;margin-bottom:14px;border-radius:8px;border:1px solid #333;background:#0e0f13;color:#fff;box-sizing:border-box;">' +
+            '<input id="velofast-auth-user" placeholder="Usuário" autocomplete="username" style="width:100%;padding:10px 12px;margin-bottom:10px;border-radius:6px;border:1px solid #3f3f46;background:#09090b;color:#fafafa;box-sizing:border-box;">' +
+            '<input id="velofast-auth-pass" type="password" placeholder="Senha" autocomplete="current-password" style="width:100%;padding:10px 12px;margin-bottom:14px;border-radius:6px;border:1px solid #3f3f46;background:#09090b;color:#fafafa;box-sizing:border-box;">' +
             '<div id="velofast-auth-error" style="color:#ff6b6b;font-size:12px;min-height:16px;margin-bottom:8px;"></div>' +
-            '<button type="submit" style="width:100%;padding:11px;border:0;border-radius:8px;background:#ffb020;color:#1a1002;font-weight:700;cursor:pointer;">Entrar</button>' +
+            '<button type="submit" style="width:100%;padding:11px;border:0;border-radius:8px;background:#f59e0b;color:#1c1917;font-weight:600;cursor:pointer;">Entrar</button>' +
             '</form>';
         document.body.appendChild(overlay);
 
@@ -146,15 +146,15 @@
         return new Promise((resolve, reject) => {
             const overlay = buildOverlay('velofast-elevate-overlay', 100000);
             overlay.innerHTML =
-                '<form id="velofast-elevate-form" style="background:#16181d;padding:28px;border-radius:14px;width:min(300px,90vw);box-shadow:0 10px 40px rgba(0,0,0,.5);">' +
+                '<form id="velofast-elevate-form" style="background:#18181b;padding:28px;border-radius:8px;border:1px solid #27272a;width:min(300px,90vw);box-shadow:0 10px 40px rgba(0,0,0,.5);">' +
                 '<h2 style="color:#fff;margin:0 0 4px;font-size:16px;">Autorização necessária</h2>' +
                 '<p style="color:#9aa0a6;margin:0 0 16px;font-size:12px;">Peça a um supervisor ou admin para autorizar esta ação.</p>' +
-                '<input id="velofast-elevate-user" placeholder="Usuário" style="width:100%;padding:9px 10px;margin-bottom:8px;border-radius:8px;border:1px solid #333;background:#0e0f13;color:#fff;box-sizing:border-box;">' +
-                '<input id="velofast-elevate-pass" type="password" placeholder="Senha" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:8px;border:1px solid #333;background:#0e0f13;color:#fff;box-sizing:border-box;">' +
+                '<input id="velofast-elevate-user" placeholder="Usuário" style="width:100%;padding:9px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #3f3f46;background:#09090b;color:#fafafa;box-sizing:border-box;">' +
+                '<input id="velofast-elevate-pass" type="password" placeholder="Senha" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #3f3f46;background:#09090b;color:#fafafa;box-sizing:border-box;">' +
                 '<div id="velofast-elevate-error" style="color:#ff6b6b;font-size:12px;min-height:14px;margin-bottom:6px;"></div>' +
                 '<div style="display:flex;gap:8px;">' +
-                '<button type="button" id="velofast-elevate-cancel" style="flex:1;padding:9px;border:0;border-radius:8px;background:#2a2d34;color:#fff;cursor:pointer;">Cancelar</button>' +
-                '<button type="submit" style="flex:1;padding:9px;border:0;border-radius:8px;background:#ffb020;color:#1a1002;font-weight:700;cursor:pointer;">Autorizar</button>' +
+                '<button type="button" id="velofast-elevate-cancel" style="flex:1;padding:9px;border:0;border-radius:8px;background:#27272a;color:#fafafa;cursor:pointer;">Cancelar</button>' +
+                '<button type="submit" style="flex:1;padding:9px;border:0;border-radius:8px;background:#f59e0b;color:#1c1917;font-weight:600;cursor:pointer;">Autorizar</button>' +
                 '</div></form>';
             document.body.appendChild(overlay);
 
