@@ -181,6 +181,7 @@ function renderMasterTab(tab) {
                                 <th style="width: 120px; text-align: center;">Limite PDVs</th>
                                 <th style="width: 150px;">Data Expiração</th>
                                 <th style="width: 130px; text-align: center;">Status</th>
+                                <th style="width: 110px; text-align: center;">Ponte</th>
                                 <th style="width: 260px; text-align: right;">Ações de Controle</th>
                             </tr>
                         </thead>
@@ -241,12 +242,15 @@ function renderStoresList() {
     
     // 3. Renderiza Linhas da Tabela
     if (pageItems.length === 0) {
+        const hasSearch = masterState.searchTerm && masterState.searchTerm.trim().length > 0;
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align: center; padding: 48px; color: var(--text-sub);">
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
-                        <i data-lucide="info" style="width: 36px; height: 36px; opacity: 0.5;"></i>
-                        <span>Nenhuma loja encontrada para o termo pesquisado.</span>
+                <td colspan="9" style="text-align: center; padding: 48px; color: var(--text-sub);">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                        <div style="font-size: 32px; opacity: 0.6;">${hasSearch ? '🔍' : '🏪'}</div>
+                        <span style="font-weight: 800; color: var(--text-main);">${hasSearch ? 'Nenhuma loja encontrada' : 'Nenhuma loja cadastrada ainda'}</span>
+                        <span style="font-size: 13px;">${hasSearch ? `Sem resultados para "${masterState.searchTerm}".` : 'Clique em "Novo Cliente / Loja" para cadastrar a primeira.'}</span>
+                        ${hasSearch ? '<button class="empty-state-action" onclick="clearStoresSearch()">Limpar busca</button>' : ''}
                     </div>
                 </td>
             </tr>
@@ -338,6 +342,17 @@ function renderStoresList() {
                                 <span>${store.active ? 'Liberado' : 'Bloqueado'}</span>
                             </span>
                         </button>
+                    </td>
+
+                    <!-- Ponte de Impressão -->
+                    <td style="text-align: center;">
+                        ${store.bridge
+                            ? `<span class="sync-badge ${store.bridge.online ? 'success' : 'danger'}" style="display: inline-flex; align-items: center; gap: 4px; border-radius: 12px; padding: 4px 10px; font-size: 10px;" title="${store.bridge.online ? 'Ponte ativa' : 'Sem sinal há mais de 30s'}${store.bridge.lastSeenAt ? ' — última vez: ' + new Date(store.bridge.lastSeenAt).toLocaleString('pt-BR') : ''}">
+                                <span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor;"></span>
+                                <span>${store.bridge.online ? 'Online' : 'Offline'}</span>
+                              </span>`
+                            : `<span style="font-size: 10px; color: var(--text-sub); font-weight: 700;" title="Nenhuma ponte configurada para esta loja">— não config.</span>`
+                        }
                     </td>
                     
                     <!-- Ações -->

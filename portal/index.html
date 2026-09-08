@@ -863,6 +863,19 @@
             startAutoplay();
         });
     </script>
+    <!-- ═══════════════════════════════════════════════════════
+     PALETA DE COMANDOS (Ctrl+K / Cmd+K)
+═══════════════════════════════════════════════════════ -->
+    <div id="cmdk-overlay" class="cmdk-overlay hidden">
+        <div class="cmdk-box">
+            <div class="cmdk-input-row">
+                <i data-lucide="search" style="width:18px;height:18px;color:var(--text-sub);"></i>
+                <input type="text" id="cmdk-input" placeholder="Buscar uma página... (ex: DRE, Produtos, Terminais)" autocomplete="off">
+                <span class="cmdk-hint">Esc</span>
+            </div>
+            <div id="cmdk-results" class="cmdk-results"></div>
+        </div>
+    </div>
 </body>
 
 </html>

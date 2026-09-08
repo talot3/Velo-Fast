@@ -36,6 +36,81 @@ function startClock() {
     tick(); setInterval(tick, 1000);
 }
 
+// ── INDICADOR DE CONEXÃO / FILA PENDENTE ────────────────────
+function updateConnectionIndicator() {
+    const el = document.getElementById('connection-indicator');
+    const label = document.getElementById('connection-label');
+    if (!el || !label) return;
+
+    const pending = VeloAuth.getQueueLength();
+    const offline = !navigator.onLine;
+
+    if (offline) {
+        el.classList.remove('hidden', 'syncing');
+        label.textContent = pending > 0 ? `Offline · ${pending} pendente(s)` : 'Sem conexão';
+    } else if (pending > 0) {
+        el.classList.remove('hidden');
+        el.classList.add('syncing');
+        label.textContent = `Sincronizando ${pending}...`;
+    } else {
+        el.classList.add('hidden');
+        el.classList.remove('syncing');
+    }
+}
+window.addEventListener('online', updateConnectionIndicator);
+window.addEventListener('offline', updateConnectionIndicator);
+document.addEventListener('velofast-queue-flushed', updateConnectionIndicator);
+setInterval(updateConnectionIndicator, 3000);
+
+// ── ATALHOS DE TECLADO (desktop) ─────────────────────────────
+// Números/ponto/backspace alimentam o numpad (útil com teclado numérico
+// dedicado ou leitor de código de barras). Enter confirma a próxima ação
+// óbvia (abrir pagamento / finalizar). Esc fecha o que estiver aberto.
+document.addEventListener('keydown', (ev) => {
+    const tag = (ev.target.tagName || '').toUpperCase();
+    const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || ev.target.isContentEditable;
+
+    if (ev.key === 'Escape') {
+        const paymentModal = document.getElementById('payment-modal');
+        const itensDrawer = document.getElementById('itens-drawer');
+        const confirmModal = document.getElementById('confirm-modal');
+        if (confirmModal && !confirmModal.classList.contains('hidden')) return; // deixa o modal de confirmação tratar
+        if (paymentModal && !paymentModal.classList.contains('hidden')) { fecharPagamento(); return; }
+        if (itensDrawer && itensDrawer.classList.contains('open')) { fecharItens(); return; }
+        return;
+    }
+
+    if (isTyping) return; // não interfere com digitação em campos de texto
+
+    if (ev.key === 'Enter') {
+        const paymentModal = document.getElementById('payment-modal');
+        const btnFinalizar = document.getElementById('btn-finalizar');
+        const isPaymentOpen = paymentModal && !paymentModal.classList.contains('hidden');
+        if (isPaymentOpen && btnFinalizar && !btnFinalizar.classList.contains('hidden') && !btnFinalizar.disabled) {
+            ev.preventDefault();
+            finalizarVenda();
+        } else if (!isPaymentOpen && order.length > 0) {
+            ev.preventDefault();
+            abrirPagamento();
+        }
+        return;
+    }
+
+    if (/^[0-9]$/.test(ev.key) || ev.key === '.') {
+        const paymentModal = document.getElementById('payment-modal');
+        const isPaymentOpen = paymentModal && !paymentModal.classList.contains('hidden');
+        if (isPaymentOpen) {
+            if (ev.key !== '.') npPay(ev.key); // numpad de pagamento é só em centavos, sem ponto
+        } else {
+            np(ev.key);
+        }
+    } else if (ev.key === 'Backspace') {
+        const paymentModal = document.getElementById('payment-modal');
+        const isPaymentOpen = paymentModal && !paymentModal.classList.contains('hidden');
+        if (isPaymentOpen) npPay('del'); else np('DEL');
+    }
+});
+
 // ── SINCRONIZAÇÃO ────────────────────────────────────────
 function syncData() {
     return fetch('/api/data', { headers: VeloAuth.authHeaders() })
@@ -368,7 +443,12 @@ function renderProducts() {
     if (!tabs || !grid) return;
 
     if (!db.subgroups.length && !db.products.length) {
-        grid.innerHTML = '<div class="loading-products">Nenhum produto cadastrado.</div>';
+        grid.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📦</div>
+                <p class="empty-state-title">Nenhum produto cadastrado ainda</p>
+                <p class="empty-state-hint">Cadastre produtos no Portal (Catálogo de Itens) para eles aparecerem aqui.</p>
+            </div>`;
         return;
     }
 
@@ -408,7 +488,13 @@ function renderProducts() {
         p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     if (!filtered.length) {
-        grid.innerHTML = '<div class="loading-products">Nenhum produto encontrado.</div>';
+        grid.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🔍</div>
+                <p class="empty-state-title">Nenhum produto encontrado</p>
+                <p class="empty-state-hint">${searchQuery ? `Sem resultados para "${searchQuery}".` : 'Tente outro grupo ou termo de busca.'}</p>
+                ${searchQuery ? `<button class="empty-state-action" onclick="clearSearch()">Limpar busca</button>` : ''}
+            </div>`;
         return;
     }
 
@@ -419,9 +505,24 @@ function renderProducts() {
         if (sg && sg.buttonColor) {
             cardStyle = `border-left: 4px solid ${sg.buttonColor};`;
         }
-        
+
+        // Indicador de estoque — só aparece para itens com controle ativo
+        // (stock null/vazio = item sem controle, não mostra nada)
+        let stockBadge = '';
+        let outOfStock = false;
+        if (p.stock !== null && p.stock !== undefined && p.stock !== '') {
+            const qty = Number(p.stock);
+            if (qty <= 0) {
+                outOfStock = true;
+                stockBadge = '<span class="stock-badge stock-badge-out">Sem estoque</span>';
+            } else if (qty <= 5) {
+                stockBadge = `<span class="stock-badge stock-badge-low">Últ. ${qty}</span>`;
+            }
+        }
+
         return `
-        <div class="product-card" onclick="addToOrder(${p.id})" id="pc-${p.id}" style="${cardStyle}">
+        <div class="product-card ${outOfStock ? 'product-card-disabled' : ''}" onclick="${outOfStock ? `toast('⚠️ ${p.name} sem estoque disponível.')` : `addToOrder(${p.id})`}" id="pc-${p.id}" style="${cardStyle}">
+            ${stockBadge}
             <div class="product-icon">${lucideIcon(p.icon)}</div>
             <div class="product-name">${p.name}</div>
             <div class="product-price">R$ ${Number(p.price).toFixed(2)}</div>
@@ -1163,7 +1264,7 @@ async function enviarImpressao(endpoint, payload) {
 
     const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: VeloAuth.authHeaders(),
         body: JSON.stringify(payload)
     });
     return await res.json();
@@ -1241,8 +1342,8 @@ window.executarImpressao = async function() {
 
         const termName = terminal?.name || session.terminalId;
         toast(printerUsed
-            ? `🖨 [${termName}] Impresso em: ${printerUsed}`
-            : '🖨 Tickets enviados para impressão!');
+            ? `🖨 [${termName}] Enviado para fila de impressão: ${printerUsed}`
+            : '🖨 Tickets enviados para a fila de impressão!');
     } else {
         const termName = terminal?.name || session.terminalId;
         toast(`⚠️ Falha ao imprimir em [${termName}]. Verifique a impressora no portal.`);
@@ -1444,7 +1545,7 @@ window.reimprimirItem = async function(id) {
             }],
         });
         if (json.success) {
-            toast(`✅ Reimpresso em: ${json.printerName || 'impressora'}`);
+            toast(`✅ Enviado para a fila de impressão: ${json.printerName || 'impressora'}`);
         } else {
             toast(`❌ Falha: ${json.error || 'erro desconhecido'}`);
         }
@@ -1691,7 +1792,7 @@ window.imprimirSangria = async function() {
     try {
         const json = await enviarImpressao('/api/print-sangria', sangriaAtual);
         if (json.success) {
-            toast(`🖨 Comprovante impresso em: ${json.printerName || 'impressora'}`);
+            toast(`🖨 Comprovante na fila de impressão: ${json.printerName || 'impressora'}`);
             fecharSangria();
         } else {
             toast(`❌ Falha: ${json.error || 'erro desconhecido'}`);
@@ -1805,7 +1906,7 @@ window.confirmarFechamentoCaixa = async function(imprimir = true) {
         // Tenta imprimir antes de encerrar
         try {
             const json = await enviarImpressao('/api/print-fechamento', fechamentoData);
-            if (json.success) toast(`🖨 Relatório impresso em: ${json.printerName}`);
+            if (json.success) toast(`🖨 Relatório na fila de impressão: ${json.printerName}`);
             else              toast(`⚠️ Impressão falhou: ${json.error}`);
         } catch (e) {
             toast('⚠️ Impressora não disponível — encerrando mesmo assim.');

@@ -275,6 +275,39 @@ button:active { transform: scale(.97); }
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
+.connection-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    background: rgba(255, 84, 112, 0.15);
+    border: 1px solid rgba(255, 84, 112, 0.35);
+    color: #ff8095;
+}
+.connection-indicator.syncing {
+    background: rgba(255, 176, 32, 0.15);
+    border-color: rgba(255, 176, 32, 0.35);
+    color: var(--brand-light);
+}
+.connection-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: connection-pulse 1.4s ease-in-out infinite;
+}
+@keyframes connection-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .connection-dot { animation: none; }
+}
+
 .btn-hdr-icon {
     background: rgba(255,255,255,0.08);
     color: #ffffff; border-radius: var(--radius-sm);
@@ -1034,6 +1067,7 @@ button:active { transform: scale(.97); }
     gap: 12px; cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: var(--shadow);
+    position: relative;
 }
 .product-card:hover {
     transform: translateY(-2px);
@@ -1041,6 +1075,36 @@ button:active { transform: scale(.97); }
     box-shadow: var(--shadow-lg);
 }
 .product-card:active { transform: scale(.96); }
+
+.product-card-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+.product-card-disabled:hover {
+    transform: none;
+    box-shadow: var(--shadow);
+}
+
+.stock-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 7px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+    z-index: 1;
+}
+.stock-badge-low {
+    background: rgba(255, 176, 32, 0.15);
+    color: var(--brand);
+    border: 1px solid rgba(255, 176, 32, 0.35);
+}
+.stock-badge-out {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid rgba(255, 84, 112, 0.35);
+}
 
 .product-icon {
     width: 54px; height: 54px;
@@ -2003,3 +2067,31 @@ button:active { transform: scale(.97); }
     transform: translateY(-1px);
 }
 
+
+/* ═══════════════════════════════════════════════════════
+   ESTADOS VAZIOS
+═══════════════════════════════════════════════════════ */
+.empty-state {
+    grid-column: 1/-1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 56px 24px;
+    gap: 6px;
+}
+.empty-state-icon { font-size: 36px; margin-bottom: 6px; opacity: 0.7; }
+.empty-state-title { font-size: 15px; font-weight: 800; color: var(--text); }
+.empty-state-hint { font-size: 13px; color: var(--text-sub); max-width: 320px; }
+.empty-state-action {
+    margin-top: 10px;
+    background: var(--surface2);
+    color: var(--brand);
+    border: 1.5px solid var(--brand);
+    padding: 9px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.empty-state-action:hover { background: rgba(255, 176, 32, 0.1); }

@@ -695,3 +695,18 @@ body.authenticated .app-wrapper {
 .adm-action-btn.active-store-btn:hover {
     background: rgba(16, 185, 129, 0.12);
 }
+
+/* ═══════════════════════════════════════════════════════
+   ESTADOS VAZIOS
+═══════════════════════════════════════════════════════ */
+.empty-state-action {
+    background: var(--surface);
+    color: var(--brand);
+    border: 1.5px solid var(--brand);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.empty-state-action:hover { background: rgba(255, 176, 32, 0.1); }

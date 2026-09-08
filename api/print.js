@@ -1,6 +1,7 @@
 const { setCors, getStoreId, readBody, handleError } = require('../lib/supabase');
 const { readState } = require('../lib/state');
-const { findTerminalFlex, buildEscPos, printNetworkRaw } = require('../lib/print');
+const { buildEscPos } = require('../lib/print');
+const { resolvePrinter, validatePrinterConfig, enqueuePrintJob } = require('../lib/print-queue');
 const { requireAuth } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
@@ -18,17 +19,13 @@ module.exports = async function handler(req, res) {
         if (payload.printerId != null) {
             printer = (data.printers || []).find((p) => String(p.id) === String(payload.printerId)) || null;
         }
-        if (!printer && payload.terminalId && Array.isArray(data.terminals)) {
-            const term = findTerminalFlex(data.terminals, payload.terminalId);
-            if (term && term.printerId) {
-                printer = (data.printers || []).find((p) => String(p.id) === String(term.printerId)) || null;
-            }
-        }
-        if (!printer && data.printers && data.printers.length > 0) {
-            printer = data.printers[0];
-        }
         if (!printer) {
-            return res.status(404).json({ error: 'Nenhuma impressora disponível. Configure no portal.' });
+            printer = resolvePrinter(data, payload.terminalId);
+        }
+
+        const configError = validatePrinterConfig(printer);
+        if (configError) {
+            return res.status(printer ? 400 : 404).json({ error: configError });
         }
 
         let printData;
@@ -40,23 +37,18 @@ module.exports = async function handler(req, res) {
             return res.status(400).json({ error: 'Sem dados para imprimir (transactions ou text).' });
         }
 
-        if (printer.useWindowsPrinter) {
-            return res.status(501).json({
-                error:
-                    'Impressão via driver do Windows não é suportada na nuvem (Vercel). ' +
-                    'Use uma impressora de rede (IP) ou uma ponte local para essa loja.'
-            });
-        }
-        if (!printer.ip) {
-            return res.status(400).json({ error: 'Configuração de impressora inválida (sem IP).' });
-        }
+        // A nuvem nunca imprime direto (não alcança impressoras na rede local
+        // da loja). Em vez disso, grava um job na fila — a ponte local
+        // (velo-bridge) busca e imprime de dentro da rede da loja.
+        await enqueuePrintJob(storeId, printer, printData);
 
-        await printNetworkRaw(printer, printData);
-        res.status(200).json({ success: true, printerName: printer.name });
+        res.status(200).json({
+            success: true,
+            queued: true,
+            printerName: printer.name,
+            message: 'Impressão enfileirada — será impressa pela ponte local em instantes.'
+        });
     } catch (e) {
-        if (!e.statusCode) {
-            e.message += ' — se a impressora está em rede local (LAN), a Vercel não consegue alcançá-la diretamente.';
-        }
         handleError(res, e, 500, 'Erro de impressão:');
     }
 };

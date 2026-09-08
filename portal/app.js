@@ -1302,9 +1302,21 @@ function renderCatalogue(container) {
         <div class="grid-card-container">
             
             <!-- Barra superior Slate Dark (Produtos + Ícone de Grid) -->
-            <div class="grid-card-title-bar">
-                <i data-lucide="table"></i>
-                <span>Produtos</span>
+            <div class="grid-card-title-bar" style="justify-content: space-between;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <i data-lucide="table"></i>
+                    <span>Produtos</span>
+                </div>
+                <div id="bulk-actions-bar" class="bulk-actions-bar hidden">
+                    <span id="bulk-actions-count">0 selecionados</span>
+                    <button class="bulk-action-btn" onclick="bulkChangeGroupPrompt()">
+                        <i data-lucide="folder-input" style="width:13px;height:13px;"></i> Mudar Grupo
+                    </button>
+                    <button class="bulk-action-btn bulk-action-danger" onclick="bulkDeleteProducts()">
+                        <i data-lucide="trash-2" style="width:13px;height:13px;"></i> Excluir
+                    </button>
+                    <button class="bulk-action-btn" onclick="clearProductSelection()">Cancelar</button>
+                </div>
             </div>
 
             <!-- Painel de Agrupamento -->
@@ -1320,6 +1332,9 @@ function renderCatalogue(container) {
             <table class="tree-table">
                 <thead>
                     <tr id="grid-header-row">
+                        <th style="width: 36px; text-align: center; cursor: default;">
+                            <input type="checkbox" id="select-all-products" onchange="toggleSelectAllProducts(this.checked)">
+                        </th>
                         ${orderedVisibleCols.map(col => `
                         <th draggable="true"
                             data-col-id="${col.id}"
@@ -1339,6 +1354,7 @@ function renderCatalogue(container) {
 
                     <!-- Linha de Filtros por Coluna (segue a mesma ordem das colunas) -->
                     <tr class="filter-row">
+                        <td></td>
                         ${orderedVisibleCols.map(col => {
                             if (col.id === 'group') return `
                             <td>
@@ -1365,6 +1381,7 @@ function renderCatalogue(container) {
                             </td>`;
                         }).join('')}
                         <td></td>
+                        <td></td>
                     </tr>
                 </thead>
                 <tbody>
@@ -1376,7 +1393,13 @@ function renderCatalogue(container) {
 
     function renderGridBody() {
         if (filteredProducts.length === 0) {
-            return `<tr><td colspan="10" style="text-align:center; padding: 40px; color: var(--text-sub); font-weight: 600">Nenhum produto atende aos filtros aplicados.</td></tr>`;
+            const hasProducts = state.products.length > 0;
+            return `<tr><td colspan="10" style="text-align:center; padding: 48px 24px;">
+                <div style="font-size: 32px; margin-bottom: 8px; opacity: 0.7;">${hasProducts ? '🔍' : '📦'}</div>
+                <div style="font-weight: 800; color: var(--text-main); margin-bottom: 4px;">${hasProducts ? 'Nenhum produto encontrado' : 'Nenhum produto cadastrado ainda'}</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: ${hasProducts ? '12px' : '0'};">${hasProducts ? 'Nenhum produto corresponde aos filtros aplicados.' : 'Clique em "Adicionar Item" para cadastrar o primeiro produto.'}</div>
+                ${hasProducts ? '<button class="empty-state-action" onclick="clearAllGridFilters()">Limpar filtros</button>' : ''}
+            </td></tr>`;
         }
 
         // Renderização Plana — ordem segue columnOrder
@@ -1399,9 +1422,13 @@ function renderCatalogue(container) {
             };
 
             const cells = orderedVisibleCols.map(col => cellMap[col.id] || '').join('');
+            const isChecked = window.catalogueSelectedIds && window.catalogueSelectedIds.has(product.id);
 
             return `
-                <tr class="product-row" onclick="openProductModal(${product.id})">
+                <tr class="product-row ${isChecked ? 'row-selected' : ''}" onclick="openProductModal(${product.id})">
+                    <td style="text-align: center;" onclick="event.stopPropagation();">
+                        <input type="checkbox" class="row-select-checkbox" ${isChecked ? 'checked' : ''} onchange="toggleProductSelection(${product.id}, this.checked)">
+                    </td>
                     ${cells}
                     <td style="text-align: center;" onclick="event.stopPropagation();">
                         <i data-lucide="trash-2" style="width: 14px; color: var(--danger); cursor: pointer;" onclick="removeProduct(${product.id});"></i>
@@ -1411,6 +1438,100 @@ function renderCatalogue(container) {
         }).join('');
     }
 }
+
+// ─── Seleção em Lote (Catálogo) ─────────────────────────────────────────────
+window.catalogueSelectedIds = window.catalogueSelectedIds || new Set();
+
+function updateBulkActionsBar() {
+    const bar = document.getElementById('bulk-actions-bar');
+    const countEl = document.getElementById('bulk-actions-count');
+    const selectAllBox = document.getElementById('select-all-products');
+    if (!bar || !countEl) return;
+
+    const n = window.catalogueSelectedIds.size;
+    bar.classList.toggle('hidden', n === 0);
+    countEl.textContent = `${n} selecionado${n === 1 ? '' : 's'}`;
+
+    if (selectAllBox) {
+        const totalRows = document.querySelectorAll('.row-select-checkbox').length;
+        selectAllBox.checked = totalRows > 0 && n >= totalRows;
+        selectAllBox.indeterminate = n > 0 && n < totalRows;
+    }
+}
+
+window.toggleProductSelection = function (id, checked) {
+    if (checked) window.catalogueSelectedIds.add(id);
+    else window.catalogueSelectedIds.delete(id);
+    document.querySelector(`tr.product-row input[onchange*="(${id},"]`)?.closest('tr')?.classList.toggle('row-selected', checked);
+    updateBulkActionsBar();
+};
+
+window.toggleSelectAllProducts = function (checked) {
+    document.querySelectorAll('.row-select-checkbox').forEach(box => {
+        box.checked = checked;
+        const tr = box.closest('tr');
+        tr?.classList.toggle('row-selected', checked);
+        const match = box.getAttribute('onchange').match(/toggleProductSelection\((\d+),/);
+        if (match) {
+            const id = parseInt(match[1], 10);
+            if (checked) window.catalogueSelectedIds.add(id);
+            else window.catalogueSelectedIds.delete(id);
+        }
+    });
+    updateBulkActionsBar();
+};
+
+window.clearProductSelection = function () {
+    window.catalogueSelectedIds.clear();
+    renderPage('products');
+};
+
+window.bulkDeleteProducts = async function () {
+    const ids = Array.from(window.catalogueSelectedIds);
+    if (ids.length === 0) return;
+    if (!confirm(`Excluir ${ids.length} produto(s) selecionado(s)? Esta ação não pode ser desfeita.`)) return;
+
+    state.products = state.products.filter(p => !ids.includes(p.id));
+    window.catalogueSelectedIds.clear();
+    await saveData();
+    renderPage('products');
+    toast?.(`${ids.length} produto(s) excluído(s).`);
+};
+
+window.bulkChangeGroupPrompt = function () {
+    const ids = Array.from(window.catalogueSelectedIds);
+    if (ids.length === 0) return;
+
+    const options = state.subgroups.map(sg => {
+        const g = state.groups.find(gr => gr.id === sg.groupId);
+        return `<option value="${sg.id}">${g ? g.name + ' / ' : ''}${sg.name}</option>`;
+    }).join('');
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '10001';
+    modal.innerHTML = `
+        <div class="confirm-card" style="max-width: 360px;">
+            <p class="confirm-message" style="margin-bottom: 4px;">Mover ${ids.length} produto(s) para qual subgrupo?</p>
+            <select id="bulk-group-select" class="form-control" style="margin-bottom: 8px;">${options}</select>
+            <div class="confirm-actions">
+                <button class="btn-cancel" id="bulk-group-cancel">Cancelar</button>
+                <button class="btn-save" id="bulk-group-confirm">Aplicar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#bulk-group-cancel').onclick = () => modal.remove();
+    modal.querySelector('#bulk-group-confirm').onclick = async () => {
+        const subgroupId = parseInt(modal.querySelector('#bulk-group-select').value, 10);
+        state.products.forEach(p => { if (ids.includes(p.id)) p.subgroupId = subgroupId; });
+        modal.remove();
+        window.catalogueSelectedIds.clear();
+        await saveData();
+        renderPage('products');
+        toast?.(`${ids.length} produto(s) movido(s).`);
+    };
+};
 
 // ─── Controladores Globais da Grid Avançada ────────────────────────────────
 
@@ -1505,6 +1626,11 @@ window.toggleGridGroup = function(groupType) {
 
 window.applyGridFilter = function(field, val) {
     window.catalogueGridState.filters[field] = val;
+    renderPage('products');
+};
+
+window.clearAllGridFilters = function() {
+    window.catalogueGridState.filters = {};
     renderPage('products');
 };
 
@@ -2626,9 +2752,9 @@ function openPrinterModal(printerId = null) {
 
         <div id="windows-config-section" style="${pr.useWindowsPrinter ? '' : 'display:none;'} margin-bottom: 16px;">
             <div class="form-group col-12">
-                <label class="form-label">Nome Exato da Impressora no Windows</label>
-                <input type="text" class="form-control" id="frm-pr-systemname" placeholder="Ex: Elgin i9" value="${pr.systemName || ''}">
-                <p style="font-size: 11px; color: var(--text-sub); margin-top: 4px;">Vá em 'Impressoras e Scanners' no Windows e copie o nome exato.</p>
+                <label class="form-label">Nome Exato da Impressora (ou caminho de rede)</label>
+                <input type="text" class="form-control" id="frm-pr-systemname" placeholder="Ex: EPSON TM-T20  ou  \\COMPUTADOR-BAR\EPSON-TM20" value="${pr.systemName || ''}">
+                <p style="font-size: 11px; color: var(--text-sub); margin-top: 4px;">Se a impressora está instalada e compartilhada em <strong>outro computador</strong> da rede, use o caminho completo: <code>\\NOME-DO-COMPUTADOR\NomeCompartilhado</code> (veja em 'Impressoras e Scanners' → propriedades do compartilhamento, no computador onde ela está instalada).</p>
             </div>
         </div>
 
@@ -11279,3 +11405,142 @@ function renderSkills(container) {
 
 
 
+
+// ════════════════════════════════════════════════════════
+// PALETA DE COMANDOS (Ctrl+K / Cmd+K)
+// ════════════════════════════════════════════════════════
+const CMDK_PAGES = [
+    { page: 'home', label: 'Iniciar' },
+    { page: 'dashboard', label: 'Dashboard' },
+    { page: 'swot', label: 'Matriz SWOT Dinâmica' },
+    { page: 'actionPlan', label: 'Plano de Ação' },
+    { page: 'users', label: 'Usuários' },
+    { page: 'cargos', label: 'Cargos e Permissões' },
+    { page: 'planoConta', label: 'Plano de Contas' },
+    { page: 'centroCusto', label: 'Centros de Custos' },
+    { page: 'contaFinanceira', label: 'Contas Financeiras' },
+    { page: 'paymentMethods', label: 'Formas de Pagamento' },
+    { page: 'products', label: 'Produtos / Catálogo' },
+    { page: 'groups', label: 'Grupos' },
+    { page: 'subgroups', label: 'Subgrupos' },
+    { page: 'inventory', label: 'Inventário' },
+    { page: 'conciliacaoCaixa', label: 'Conciliação de Caixa' },
+    { page: 'receitas', label: 'Receitas' },
+    { page: 'despesas', label: 'Despesas' },
+    { page: 'reportSalesByProduct', label: 'Relatório: Vendas por Produto' },
+    { page: 'reportSalesByTerminal', label: 'Relatório: Vendas por Caixa' },
+    { page: 'reportSangrias', label: 'Relatório: Sangrias' },
+    { page: 'reportFechamento', label: 'Relatório: Fechamento de Caixa' },
+    { page: 'reportSalesByPeriod', label: 'Relatório: Vendas por Período' },
+    { page: 'reportDrePersonalizada', label: 'DRE Personalizada' },
+    { page: 'reportFluxoCaixa', label: 'Fluxo de Caixa' },
+    { page: 'reportPontoEquilibrio', label: 'Ponto de Equilíbrio' },
+    { page: 'reportDreGerencial', label: 'DRE Gerencial' },
+    { page: 'reportBalancoPatrimonial', label: 'Balanço Patrimonial' },
+    { page: 'compliance', label: 'Compliance' },
+    { page: 'skills', label: 'Gestão de Skills' },
+    { page: 'terminals', label: 'Terminais de Caixa' },
+    { page: 'printers', label: 'Impressoras' },
+    { page: 'ticketConfig', label: 'Configuração do Ticket' },
+    { page: 'backup', label: 'Backup de Dados' },
+];
+
+let cmdkActiveIndex = 0;
+let cmdkFiltered = CMDK_PAGES;
+
+function cmdkOpen() {
+    const overlay = document.getElementById('cmdk-overlay');
+    const input = document.getElementById('cmdk-input');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+    input.value = '';
+    cmdkActiveIndex = 0;
+    cmdkRender('');
+    setTimeout(() => input.focus(), 30);
+}
+
+function cmdkClose() {
+    document.getElementById('cmdk-overlay')?.classList.add('hidden');
+}
+
+function cmdkRender(query) {
+    const q = query.trim().toLowerCase();
+    cmdkFiltered = q
+        ? CMDK_PAGES.filter(p => p.label.toLowerCase().includes(q) || p.page.toLowerCase().includes(q))
+        : CMDK_PAGES;
+    cmdkActiveIndex = 0;
+
+    const results = document.getElementById('cmdk-results');
+    if (cmdkFiltered.length === 0) {
+        results.innerHTML = '<div class="cmdk-item-empty">Nenhuma página encontrada.</div>';
+        return;
+    }
+    results.innerHTML = cmdkFiltered.map((p, i) => `
+        <div class="cmdk-item ${i === cmdkActiveIndex ? 'active' : ''}" data-index="${i}" onclick="cmdkSelect(${i})">
+            ${p.label}
+        </div>
+    `).join('');
+}
+
+function cmdkHighlight(index) {
+    cmdkActiveIndex = Math.max(0, Math.min(index, cmdkFiltered.length - 1));
+    document.querySelectorAll('.cmdk-item').forEach((el, i) => {
+        el.classList.toggle('active', i === cmdkActiveIndex);
+    });
+    document.querySelector('.cmdk-item.active')?.scrollIntoView({ block: 'nearest' });
+}
+
+window.cmdkSelect = function (index) {
+    const chosen = cmdkFiltered[index];
+    if (!chosen) return;
+    cmdkClose();
+    const navEl = document.querySelector(`.nav-item[data-page="${chosen.page}"]`);
+    setActivePage(chosen.page, navEl);
+    renderPage(chosen.page);
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('cmdk-input');
+    if (!input) return;
+
+    input.addEventListener('input', () => cmdkRender(input.value));
+
+    document.getElementById('cmdk-overlay').addEventListener('click', (ev) => {
+        if (ev.target.id === 'cmdk-overlay') cmdkClose();
+    });
+
+    input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'ArrowDown') { ev.preventDefault(); cmdkHighlight(cmdkActiveIndex + 1); }
+        else if (ev.key === 'ArrowUp') { ev.preventDefault(); cmdkHighlight(cmdkActiveIndex - 1); }
+        else if (ev.key === 'Enter') { ev.preventDefault(); cmdkSelect(cmdkActiveIndex); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); cmdkClose(); }
+    });
+});
+
+document.addEventListener('keydown', (ev) => {
+    const isCmdK = (ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'k';
+    if (isCmdK) {
+        ev.preventDefault();
+        cmdkOpen();
+    } else if (ev.key === 'Escape') {
+        cmdkClose();
+    }
+});
+
+// ════════════════════════════════════════════════════════
+// TOAST — feedback rápido e não-bloqueante
+// ════════════════════════════════════════════════════════
+let _portalToastTimer = null;
+window.toast = function (msg, dur = 3000) {
+    let el = document.getElementById('portal-toast');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'portal-toast';
+        el.className = 'portal-toast';
+        document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(_portalToastTimer);
+    _portalToastTimer = setTimeout(() => el.classList.remove('show'), dur);
+};
