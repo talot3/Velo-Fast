@@ -465,13 +465,13 @@ function renderDashboard(container) {
             }
             /* Texturas de folha e gravação ricas */
             .rich-kpi-value.green-foil {
-                background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+                background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 text-shadow: none;
             }
             .rich-kpi-value.red-foil {
-                background: linear-gradient(135deg, #ff5470 0%, #e11d48 100%);
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 text-shadow: none;
@@ -510,14 +510,14 @@ function renderDashboard(container) {
                 <span class="rich-kpi-title">Faturamento Bruto</span>
                 <span class="rich-kpi-value green-foil">R$ ${totalSalesBruto.toFixed(2)}</span>
                 <div class="micro-emboss-stamp" title="Autenticado Velo">
-                    <i data-lucide="award" style="width:16px; color:#34d399;"></i>
+                    <i data-lucide="award" style="width:16px; color:#22c55e;"></i>
                 </div>
             </div>
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Valor Cancelado</span>
                 <span class="rich-kpi-value red-foil">R$ ${totalCancelledSales.toFixed(2)}</span>
                 <div class="micro-emboss-stamp">
-                    <i data-lucide="shield-alert" style="width:16px; color:#ff5470;"></i>
+                    <i data-lucide="shield-alert" style="width:16px; color:#ef4444;"></i>
                 </div>
             </div>
             <div class="rich-kpi-card">
@@ -536,9 +536,9 @@ function renderDashboard(container) {
             </div>
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Tickets Cancelados</span>
-                <span class="rich-kpi-value" style="color:#ff5470;">${totalCancelledItems}</span>
+                <span class="rich-kpi-value" style="color:#ef4444;">${totalCancelledItems}</span>
                 <div class="micro-emboss-stamp">
-                    <i data-lucide="ban" style="width:16px; color:#ff5470;"></i>
+                    <i data-lucide="ban" style="width:16px; color:#ef4444;"></i>
                 </div>
             </div>
             <div class="rich-kpi-card">
@@ -1108,7 +1108,7 @@ function renderCatalogue(container) {
             }
             .col-remove-zone.drag-active {
                 border-color: #ef4444;
-                background: var(--danger-bg, rgba(255,84,112,0.12));
+                background: var(--danger-bg, rgba(239,68,68,0.12));
                 color: #ef4444;
             }
 
@@ -6201,7 +6201,7 @@ window.renderReportDrePersonalizada = function(container) {
                 box-shadow: 0 6px 10px rgba(29,78,216,0.15), inset 0 1px 0 rgba(255,255,255,0.4);
             }
             .dre-pill-btn.success {
-                background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+                background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
                 color: white;
             }
             .dre-pill-btn.success:hover {
@@ -6374,7 +6374,7 @@ window.renderReportDrePersonalizada = function(container) {
                 transition: all 0.2s;
             }
             .action-btn-minimal:hover {
-                background: var(--danger-bg, rgba(255,84,112,0.12));
+                background: var(--danger-bg, rgba(239,68,68,0.12));
                 color: var(--danger);
             }
             .action-btn-minimal.edit:hover {
@@ -6394,14 +6394,14 @@ window.renderReportDrePersonalizada = function(container) {
                 min-width: 14px;
             }
             .dre-badge-indicator.plus {
-                background: rgba(16, 185, 129, 0.12);
-                border: 1px solid rgba(16, 185, 129, 0.25);
-                color: #34d399;
+                background: rgba(34, 197, 94, 0.12);
+                border: 1px solid rgba(34, 197, 94, 0.25);
+                color: #22c55e;
             }
             .dre-badge-indicator.minus {
                 background: rgba(239, 68, 68, 0.12);
                 border: 1px solid rgba(239, 68, 68, 0.25);
-                color: #ff5470;
+                color: #ef4444;
             }
             .dre-badge-indicator.equals {
                 background: rgba(59, 130, 246, 0.12);
@@ -7047,17 +7047,17 @@ window.renderReportFluxoCaixa = function(container) {
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Total de Entradas (Recebido)</span>
                 <span class="rich-kpi-value green-foil">R$ 25.450,00</span>
-                <div class="micro-emboss-stamp"><i data-lucide="trending-up" style="width:16px; color:#34d399;"></i></div>
+                <div class="micro-emboss-stamp"><i data-lucide="trending-up" style="width:16px; color:#22c55e;"></i></div>
             </div>
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Total de Saídas (Pago)</span>
                 <span class="rich-kpi-value red-foil">R$ 14.150,00</span>
-                <div class="micro-emboss-stamp"><i data-lucide="trending-down" style="width:16px; color:#ff5470;"></i></div>
+                <div class="micro-emboss-stamp"><i data-lucide="trending-down" style="width:16px; color:#ef4444;"></i></div>
             </div>
             <div class="rich-kpi-card">
                 <span class="rich-kpi-title">Saldo Final Previsto</span>
                 <span class="rich-kpi-value green-foil" style="font-weight:900;">R$ 16.300,00</span>
-                <div class="micro-emboss-stamp"><i data-lucide="check-circle" style="width:16px; color:#34d399;"></i></div>
+                <div class="micro-emboss-stamp"><i data-lucide="check-circle" style="width:16px; color:#22c55e;"></i></div>
             </div>
         </div>
         <div class="glass-card" style="padding:24px;">
@@ -7231,7 +7231,7 @@ window.renderReportBalancoPatrimonial = function(container) {
                 <h3 style="font-weight:800; letter-spacing:-0.03em;">Balanço Patrimonial</h3>
                 <p style="font-size:13px; color:var(--text-sub); margin-top:4px;">Demonstrativo consolidado de Ativos, Passivos e Patrimônio Líquido.</p>
             </div>
-            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #34d399; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: 20px; display: flex; align-items: center; gap: 6px;">
+            <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); color: #22c55e; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: 20px; display: flex; align-items: center; gap: 6px;">
                 <i data-lucide="check-circle" style="width: 14px;"></i> Equação Ativa: Ativo = Passivo + PL
             </div>
         </div>
