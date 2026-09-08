@@ -1,41 +1,43 @@
 /* ═══════════════════════════════════════════════════════
    VELO FAST PDV — Folha de Estilos Principal
-   Paleta: caixa em modo escuro (uso em bar/restaurante,
-   luz baixa) + acento âmbar único para total e ação principal
+   Estilo visual: shadcn/ui (tema "Amber" sobre neutros Zinc)
+   Paleta neutra precisa + raio de borda contido + formas
+   exatas de botão/card/input/badge do design system shadcn.
 ═══════════════════════════════════════════════════════ */
 
 :root {
-    /* Acento único: usado só para o total da venda e o CTA principal */
-    --brand:       #ffb020;
-    --brand-dark:  #e69a0e;
-    --brand-light: #ffc555;
-    --brand-ink:   #1a1002; /* texto sobre fundo âmbar */
+    /* Acento único (equivalente a --primary do shadcn, tema Amber) */
+    --brand:       #f59e0b;
+    --brand-dark:  #d97706;
+    --brand-light: #fbbf24;
+    --brand-ink:   #1c1917; /* texto sobre fundo âmbar (zinc-900) */
 
     /* Semânticos — nunca decorativos, só sucesso/erro/aviso */
-    --success:     #34d399;
-    --success-strong: #0b8a5f;
-    --success-bg:  rgba(52, 211, 153, 0.12);
-    --danger:      #ff5470;
-    --danger-bg:   rgba(255, 84, 112, 0.12);
-    --warning:     #f5a623;
+    --success:     #22c55e;
+    --success-strong: #15803d;
+    --success-bg:  rgba(34, 197, 94, 0.12);
+    --danger:      #ef4444;
+    --danger-bg:   rgba(239, 68, 68, 0.12);
+    --warning:     #f59e0b;
 
-    /* Fundo — carvão morno, não preto puro */
-    --bg:          #14161b;
+    /* Fundo — zinc-950 (neutro puro do shadcn, não preto absoluto) */
+    --bg:          #09090b;
 
-    /* Superfícies */
-    --surface:     #1c1f26;
-    --surface2:    #242830;
-    --surface3:    #2c313b;
-    --border:      #333844;
-    --border-dark: #3f4552;
-    --text:        #f3f1ec;
-    --text-sub:    #9aa0ac;
-    --text-light:  #6b7280;
-    --shadow:      0 2px 6px rgba(0,0,0,0.25), 0 6px 16px rgba(0,0,0,0.2);
-    --shadow-lg:   0 12px 32px -8px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
-    --radius:      10px;
-    --radius-sm:   6px;
-    --radius-lg:   16px;
+    /* Superfícies — escala zinc (900/800/700) */
+    --surface:     #18181b;
+    --surface2:    #27272a;
+    --surface3:    #3f3f46;
+    --border:      #27272a;
+    --border-dark: #3f3f46;
+    --text:        #fafafa;
+    --text-sub:    #a1a1aa;
+    --text-light:  #71717a;
+    --shadow:      0 1px 2px rgba(0,0,0,0.3);
+    --shadow-lg:   0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3);
+    /* Escala de raio shadcn: base 0.5rem, sm/lg derivados dela */
+    --radius:      6px;
+    --radius-sm:   4px;
+    --radius-lg:   8px;
     --font:        'Outfit', sans-serif;
 
     /* Alvo de toque mínimo confortável (bar/restaurante, uso com o dedo) */
@@ -159,7 +161,7 @@ button:active { transform: scale(.97); }
 .input-wrap-slim input:focus {
     background: #ffffff; /* Off-white límpido quando focado */
     border-color: var(--brand);
-    box-shadow: 0 0 0 4px rgba(255, 176, 32, 0.08);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.08);
 }
 .input-wrap-slim:focus-within .input-icon-svg {
     color: var(--brand);
@@ -285,13 +287,13 @@ button:active { transform: scale(.97); }
     font-weight: 800;
     letter-spacing: 0.02em;
     text-transform: uppercase;
-    background: rgba(255, 84, 112, 0.15);
-    border: 1px solid rgba(255, 84, 112, 0.35);
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
     color: #ff8095;
 }
 .connection-indicator.syncing {
-    background: rgba(255, 176, 32, 0.15);
-    border-color: rgba(255, 176, 32, 0.35);
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.35);
     color: var(--brand-light);
 }
 .connection-dot {
@@ -656,7 +658,7 @@ button:active { transform: scale(.97); }
 .drawer-item-del {
     width: 30px; height: 30px; border-radius: var(--radius-sm);
     background: var(--danger-bg); color: var(--danger);
-    border: 1px solid rgba(255, 84, 112, 0.35);
+    border: 1px solid rgba(239, 68, 68, 0.35);
     font-size: 14px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
     transition: all .15s;
@@ -689,13 +691,13 @@ button:active { transform: scale(.97); }
 .drawer-btn-cancel {
     flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
     background: var(--danger-bg); color: var(--danger);
-    border: 1.5px solid rgba(255, 84, 112, 0.35);
+    border: 1.5px solid rgba(239, 68, 68, 0.35);
     border-radius: var(--radius-sm); padding: 11px 8px;
     font-size: 12px; font-weight: 800; letter-spacing: .04em;
     transition: all .15s;
     min-height: var(--tap-min);
 }
-.drawer-btn-cancel:hover { background: rgba(255, 84, 112, 0.2); }
+.drawer-btn-cancel:hover { background: rgba(239, 68, 68, 0.2); }
 
 /* Total — o número mais importante da tela, isolado e dominante */
 .drawer-total-row {
@@ -719,7 +721,7 @@ button:active { transform: scale(.97); }
     transition: background .15s, opacity .15s, transform .1s;
     width: 100%;
     min-height: 54px;
-    box-shadow: 0 6px 20px rgba(255, 176, 32, 0.3);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
 }
 .drawer-pay-btn:hover:not(:disabled) { background: var(--brand-light); }
 .drawer-pay-btn:active:not(:disabled) { transform: scale(.98); }
@@ -1096,29 +1098,29 @@ button:active { transform: scale(.97); }
     z-index: 1;
 }
 .stock-badge-low {
-    background: rgba(255, 176, 32, 0.15);
+    background: rgba(245, 158, 11, 0.15);
     color: var(--brand);
-    border: 1px solid rgba(255, 176, 32, 0.35);
+    border: 1px solid rgba(245, 158, 11, 0.35);
 }
 .stock-badge-out {
     background: var(--danger-bg);
     color: var(--danger);
-    border: 1px solid rgba(255, 84, 112, 0.35);
+    border: 1px solid rgba(239, 68, 68, 0.35);
 }
 
 .product-icon {
     width: 54px; height: 54px;
-    background: rgba(255, 176, 32, 0.05);
-    border-radius: 12px;
+    background: rgba(245, 158, 11, 0.05);
+    border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
     color: var(--brand);
-    border: 1px solid rgba(255, 176, 32, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.1);
     transition: all 0.2s;
 }
 
 .product-card:hover .product-icon {
-    background: rgba(255, 176, 32, 0.08);
-    border-color: rgba(255, 176, 32, 0.15);
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.15);
 }
 
 .product-name {
@@ -1229,7 +1231,7 @@ button:active { transform: scale(.97); }
     background: var(--brand) !important;
     color: var(--brand-ink) !important;
     border: 1.5px solid var(--brand-dark) !important;
-    box-shadow: 0 3px 6px rgba(255, 176, 32, 0.25);
+    box-shadow: 0 3px 6px rgba(245, 158, 11, 0.25);
 }
 
 .fast-cash-exact:hover {
@@ -1313,7 +1315,7 @@ button:active { transform: scale(.97); }
 .pay-row-change { 
     color: var(--brand) !important; 
     font-size: 15px; font-weight: 900; 
-    background: rgba(255, 176, 32, 0.02);
+    background: rgba(245, 158, 11, 0.02);
 }
 .pay-row-change span:last-child {
     font-size: 18px;
@@ -1370,12 +1372,12 @@ button:active { transform: scale(.97); }
     background: var(--success-strong); color: white;
     padding: 14px 28px; border-radius: var(--radius-sm);
     font-size: 15px; font-weight: 900;
-    box-shadow: 0 4px 12px rgba(11,138,95,.3);
+    box-shadow: 0 4px 12px rgba(21,128,61,.3);
     flex: 1;
-    border: 1.5px solid #086b49;
+    border: 1.5px solid #14532d;
     min-height: var(--tap-min);
 }
-.btn-finalizar:hover { background: #086b49; }
+.btn-finalizar:hover { background: #14532d; }
 
 /* ════════════════════════════════════════════════════════
    TOAST
@@ -1655,7 +1657,7 @@ button:active { transform: scale(.97); }
         gap: 10px; padding: 12px;
     }
     .product-card { padding: 14px 10px; gap: 8px; min-height: var(--tap-min); }
-    .product-icon { width: 44px; height: 44px; border-radius: 10px; }
+    .product-icon { width: 44px; height: 44px; border-radius: 6px; }
     .product-icon svg { width: 22px; height: 22px; }
     .product-name { font-size: 12px; }
     .product-price { font-size: 13.5px; }
@@ -2094,4 +2096,4 @@ button:active { transform: scale(.97); }
     font-weight: 800;
     cursor: pointer;
 }
-.empty-state-action:hover { background: rgba(255, 176, 32, 0.1); }
+.empty-state-action:hover { background: rgba(245, 158, 11, 0.1); }
