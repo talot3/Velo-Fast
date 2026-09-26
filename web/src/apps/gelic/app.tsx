@@ -3,12 +3,13 @@ import { QueryClientProvider } from "@tanstack/react-query"
 
 import { AuthGate } from "@/components/app/auth-gate"
 import { ConfirmProvider } from "@/components/app/confirm-dialog"
-import { EmptyState } from "@/components/app/empty-state"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthProvider } from "@/lib/auth"
 import { createQueryClient } from "@/lib/query"
 
-/** Painel master de licenças (GELIC). Tela principal: em migração. */
+import { GelicShell } from "./shell"
+
+/** Painel master de licenças (GELIC): lojas, licenças e acesso ao portal de cada loja. */
 export function App() {
   const queryClient = useMemo(() => createQueryClient(), [])
   return (
@@ -16,11 +17,11 @@ export function App() {
       <AuthProvider minRole="master" scope="master">
         <ConfirmProvider>
           <AuthGate title="GELIC" subtitle="Gerenciamento de Licenças">
-            <EmptyState title="GELIC" description="Painel em migração." />
+            <GelicShell />
           </AuthGate>
         </ConfirmProvider>
       </AuthProvider>
-      <Toaster theme="dark" position="bottom-center" />
+      <Toaster theme="dark" position="bottom-center" richColors />
     </QueryClientProvider>
   )
 }
