@@ -1,0 +1,190 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/outfit";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Tema VELO FAST sobre os tokens do shadcn/ui.
+ * As cores são as mesmas do sistema anterior (portal/styles.css, pdv/styles.css,
+ * gelic/styles.css): âmbar #ffb020 como cor de ação, cinza quente no modo claro,
+ * carvão no modo escuro. Só o acabamento dos componentes muda.
+ */
+:root {
+  --radius: 0.625rem;
+
+  /* Portal, modo claro (antigo :root do portal) */
+  --background: #f4f3f0;
+  --foreground: #1c1c1e;
+  --card: #ffffff;
+  --card-foreground: #1c1c1e;
+  --popover: #ffffff;
+  --popover-foreground: #1c1c1e;
+  --primary: #ffb020;
+  --primary-foreground: #1a1002;
+  --secondary: #e8e6df;
+  --secondary-foreground: #1c1c1e;
+  --muted: #eae8e3;
+  --muted-foreground: #7a7975;
+  --accent: #e8e6df;
+  --accent-foreground: #1c1c1e;
+  --destructive: #ff5470;
+  --border: #e3e1da;
+  --input: #d5d3ca;
+  --ring: #ffb020;
+
+  --success: #0b8a5f;
+  --success-soft: #34d399;
+  --warning: #f5a623;
+  --brand-light: #ffc555;
+  --brand-dark: #e69a0e;
+
+  --chart-1: #ffb020;
+  --chart-2: #34d399;
+  --chart-3: #60a5fa;
+  --chart-4: #ff5470;
+  --chart-5: #a78bfa;
+
+  --sidebar: #eae8e3;
+  --sidebar-foreground: #1c1c1e;
+  --sidebar-primary: #ffb020;
+  --sidebar-primary-foreground: #1a1002;
+  --sidebar-accent: #e3e1da;
+  --sidebar-accent-foreground: #1c1c1e;
+  --sidebar-border: #e3e1da;
+  --sidebar-ring: #ffb020;
+
+  --texture: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+    radial-gradient(circle at 0 0, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  --texture-size: 4px 4px;
+}
+
+/* Portal e gelic, modo escuro (antigo body.dark-mode / gelic :root) */
+.dark {
+  --background: #141416;
+  --foreground: #f3f3f6;
+  --card: #232329;
+  --card-foreground: #f3f3f6;
+  --popover: #232329;
+  --popover-foreground: #f3f3f6;
+  --primary: #ffb020;
+  --primary-foreground: #1a1002;
+  --secondary: #2c2c35;
+  --secondary-foreground: #f3f3f6;
+  --muted: #1d1d21;
+  --muted-foreground: #8e8e93;
+  --accent: #2c2c35;
+  --accent-foreground: #f3f3f6;
+  --destructive: #ff5470;
+  --border: #2d2d34;
+  --input: #3a3a42;
+  --ring: #ffb020;
+
+  --success: #34d399;
+  --success-soft: #34d399;
+
+  --sidebar: #1d1d21;
+  --sidebar-foreground: #f3f3f6;
+  --sidebar-primary: #ffb020;
+  --sidebar-primary-foreground: #1a1002;
+  --sidebar-accent: #2c2c35;
+  --sidebar-accent-foreground: #f3f3f6;
+  --sidebar-border: #2d2d34;
+  --sidebar-ring: #ffb020;
+
+  --texture: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  --texture-size: 6px 6px;
+}
+
+/* PDV: sempre escuro, carvão morno (antigo pdv/styles.css) */
+.dark.theme-pdv {
+  --background: #14161b;
+  --foreground: #f3f1ec;
+  --card: #1c1f26;
+  --card-foreground: #f3f1ec;
+  --popover: #1c1f26;
+  --popover-foreground: #f3f1ec;
+  --secondary: #242830;
+  --secondary-foreground: #f3f1ec;
+  --muted: #242830;
+  --muted-foreground: #9aa0ac;
+  --accent: #2c313b;
+  --accent-foreground: #f3f1ec;
+  --border: #333844;
+  --input: #3f4552;
+
+  --texture: none;
+  --texture-size: auto;
+}
+
+@theme inline {
+  --font-sans: "Outfit Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-brand-light: var(--brand-light);
+  --color-brand-dark: var(--brand-dark);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    background-image: var(--texture);
+    background-size: var(--texture-size);
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Impressão de relatórios: esconde a interface e mostra só o conteúdo marcado. */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  [data-print-hide] {
+    display: none !important;
+  }
+}
