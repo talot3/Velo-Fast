@@ -3,7 +3,7 @@
  * React, para a tabela e a paginação usarem exatamente o mesmo filtro.
  */
 import type { StoreInfo } from "@/data/types"
-import { todayBR } from "@/lib/format"
+import { daysUntil } from "@/lib/format"
 
 /** Opções do seletor "Exibir:" (padrão 5, como no sistema anterior). */
 export const PAGE_SIZES = [5, 10, 20, 50] as const
@@ -59,21 +59,6 @@ export function paginate<T>(items: readonly T[], page: number, perPage: number):
   }
 }
 
-/** Número do dia de uma data "YYYY-MM-DD" (sem fuso), só para contar dias. */
-function dayNumber(isoDate: string): number {
-  const [y, m, d] = isoDate.slice(0, 10).split("-").map(Number)
-  return Date.UTC(y, m - 1, d) / 86_400_000
-}
-
-/**
- * Dias de hoje (São Paulo) até a data; negativo = já passou. Conta aqui porque
- * o daysUntil de lib/format monta "hoje" sem o "- 1" do mês (fica um mês à
- * frente e marcaria como vencidas licenças que vencem nos próximos ~30 dias).
- */
-export function daysFromTodayBR(isoDate: string): number {
-  return Math.round(dayNumber(isoDate) - dayNumber(todayBR()))
-}
-
 export type ExpiryStatus =
   | { kind: "none" }
   | { kind: "expired"; days: number }
@@ -86,7 +71,7 @@ export type ExpiryStatus =
  */
 export function expiryStatus(expireDate: string | null | undefined): ExpiryStatus {
   if (!expireDate) return { kind: "none" }
-  const days = daysFromTodayBR(expireDate)
+  const days = daysUntil(expireDate)
   if (days < 0) return { kind: "expired", days }
   if (days <= 30) return { kind: "soon", days }
   return { kind: "ok", days }

@@ -105,11 +105,11 @@ export function formatTimeBR(value: Date | string | number = new Date(), withSec
 
 /** Dias entre hoje (SP) e uma data "YYYY-MM-DD" (negativo = passou). */
 export function daysUntil(isoDate: string): number {
-  const today = todayBR()
-  const a = Date.UTC(...(today.split("-").map(Number) as [number, number, number]))
-  const [y, m, d] = isoDate.slice(0, 10).split("-").map(Number)
-  const b = Date.UTC(y, m - 1, d)
-  return Math.round((b - a) / 86400000)
+  const utc = (iso: string) => {
+    const [y, m, d] = iso.slice(0, 10).split("-").map(Number)
+    return Date.UTC(y, m - 1, d)
+  }
+  return Math.round((utc(isoDate) - utc(todayBR())) / 86400000)
 }
 
 export type DatePreset = "hoje" | "ontem" | "7dias" | "30dias" | "esteMes" | "ultimoMes" | "esteAno" | "ultimoAno"
