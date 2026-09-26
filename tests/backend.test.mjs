@@ -399,3 +399,47 @@ describe("usuários (/api/users)", () => {
     assert.equal(r.status, 403)
   })
 })
+
+describe("relatórios", () => {
+  test("vendas por produto descontam estorno e ignoram fichas canceladas", async () => {
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date())
+    const { data, error } = await sup.client.rpc("report_sales_by_product", { p_store_id: B === "x" ? B : A, p_from: today, p_to: today })
+    assert.ifError(error)
+    const suco = data.rows.find((r) => r.product_name === "SUCO")
+    assert.ok(suco)
+    // Soma direta das fichas ativas de SUCO hoje, para conferir o relatório.
+    const { data: items } = await admin
+      .from("sale_items")
+      .select("unit_price, status")
+      .eq("store_id", A)
+      .eq("product_id", "101")
+    const active = items.filter((i) => i.status === "active")
+    const expectedQty = active.reduce((n, i) => n + (Number(i.unit_price) >= 0 ? 1 : -1), 0)
+    const expectedTotal = active.reduce((n, i) => n + Number(i.unit_price), 0)
+    assert.equal(Number(suco.qty), expectedQty)
+    assert.equal(Number(suco.total), expectedTotal)
+  })
+
+  test("operador não acessa relatórios; outra loja também não", async () => {
+    const today = new Date().toISOString().slice(0, 10)
+    const byOp = await op.client.rpc("report_dashboard", { p_store_id: A })
+    assert.equal(byOp.error?.code, "42501")
+    const other = await sup.client.rpc("report_sales_by_terminal", { p_store_id: B, p_from: today, p_to: today })
+    assert.equal(other.error?.code, "42501")
+  })
+
+  test("fechamento por caixa usa o dinheiro real (troco descontado) e sangrias do banco", async () => {
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date())
+    const { data, error } = await sup.client.rpc("report_cash_closing", { p_store_id: A, p_from: today, p_to: today })
+    assert.ifError(error)
+    const cx2 = data.rows.find((r) => r.terminal_id === "CX002")
+    assert.ok(cx2)
+    assert.equal(Number(cx2.sangrias), 30)
+    assert.equal(Number(cx2.suprimento), 100)
+    assert.equal(Number(cx2.saldo_gaveta), Number(cx2.suprimento) + Number(cx2.dinheiro) - Number(cx2.sangrias))
+    const dash = await sup.client.rpc("report_dashboard", { p_store_id: A })
+    assert.ifError(dash.error)
+    assert.ok(Number(dash.data.faturamento_bruto) > 0)
+    assert.ok(dash.data.by_payment.some((m) => m.name === "DINHEIRO"))
+  })
+})

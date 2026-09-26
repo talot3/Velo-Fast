@@ -25,6 +25,9 @@ create table public.printers (
   lines_before integer not null default 4 check (lines_before between 0 and 20),
   lines_after integer not null default 0 check (lines_after between 0 and 20),
   align_spacing integer not null default 2 check (align_spacing between 0 and 20),
+  model text,
+  black_background boolean not null default false,
+  print_server boolean not null default false,
   sort_order integer not null default 0,
   extra jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
@@ -38,6 +41,9 @@ create table public.terminals (
   name text not null default '',
   cash_number integer,
   printer_id text,
+  layout text not null default 'horizontal' check (layout in ('horizontal', 'vertical')),
+  font text not null default 'Outfit',
+  font_size text not null default 'medium' check (font_size in ('small', 'medium', 'large', 'xlarge')),
   active boolean not null default true,
   sort_order integer not null default 0,
   extra jsonb not null default '{}'::jsonb,
@@ -50,7 +56,10 @@ create table public.terminals (
 create table public.payment_methods (
   store_id text not null references public.stores (id) on delete cascade,
   id text not null default gen_random_uuid()::text,
+  code text,
   name text not null,
+  button_color text,
+  text_color text,
   active boolean not null default true,
   sort_order integer not null default 0,
   extra jsonb not null default '{}'::jsonb,
@@ -139,10 +148,26 @@ create table public.store_documents (
   primary key (store_id, key)
 );
 
+-- Registros por módulo do portal (plano de contas, centros de custo,
+-- lançamentos, borderôs, cargos, linhas da DRE, compliance, skills...).
+-- Cada gravação mexe em UM registro: dois usuários editando itens
+-- diferentes nunca apagam o trabalho um do outro.
+create table public.store_records (
+  store_id text not null references public.stores (id) on delete cascade,
+  collection text not null check (collection ~ '^[A-Za-z0-9_.-]{1,64}$'),
+  id text not null default gen_random_uuid()::text,
+  data jsonb not null,
+  sort_key text,
+  updated_by uuid references auth.users (id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (store_id, collection, id)
+);
+
 do $$
 declare t text;
 begin
-  foreach t in array array['printers', 'terminals', 'payment_methods', 'product_groups', 'product_subgroups', 'products', 'store_settings', 'store_documents']
+  foreach t in array array['printers', 'terminals', 'payment_methods', 'product_groups', 'product_subgroups', 'products', 'store_settings', 'store_documents', 'store_records']
   loop
     execute format('create trigger %I before update on public.%I for each row execute function private.touch_updated_at()', t || '_touch', t);
   end loop;
@@ -215,7 +240,32 @@ begin
   end loop;
 end $$;
 
--- Documentos do portal: leitura e escrita a partir de supervisor.
+-- Documentos e registros do portal: leitura e escrita a partir de supervisor.
+alter table public.store_records enable row level security;
+create policy store_records_select on public.store_records for select to authenticated
+  using ((select private.can_manage_store(store_id, 'supervisor')));
+create policy store_records_insert on public.store_records for insert to authenticated
+  with check ((select private.can_manage_store(store_id, 'supervisor')));
+create policy store_records_update on public.store_records for update to authenticated
+  using ((select private.can_manage_store(store_id, 'supervisor')))
+  with check ((select private.can_manage_store(store_id, 'supervisor')));
+create policy store_records_delete on public.store_records for delete to authenticated
+  using ((select private.can_manage_store(store_id, 'supervisor')));
+
+create or replace function private.stamp_record_author()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_by := (select auth.uid());
+  return new;
+end;
+$$;
+
+create trigger store_records_author before insert or update on public.store_records
+  for each row execute function private.stamp_record_author();
+
 alter table public.store_documents enable row level security;
 create policy store_documents_select on public.store_documents for select to authenticated
   using ((select private.can_manage_store(store_id, 'supervisor')));

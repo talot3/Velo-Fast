@@ -16,6 +16,8 @@ as $$
 $$;
 
 -- ─── Carga inicial do PDV em uma única chamada ─────────────────────
+-- Produtos e subgrupos saem na ordem de cadastro, como o PDV antigo exibia
+-- (o campo "Ordem" do portal nunca mudou a ordem dos botões no caixa).
 create or replace function public.pdv_bootstrap(p_store_id text, p_terminal_id text default null)
 returns jsonb
 language plpgsql
@@ -31,12 +33,12 @@ begin
   select jsonb_build_object(
     'store', (select jsonb_build_object('id', s.id, 'name', s.name) from public.stores s where s.id = p_store_id),
     'settings', coalesce((select to_jsonb(ss) - 'store_id' from public.store_settings ss where ss.store_id = p_store_id), '{}'::jsonb),
-    'products', coalesce((select jsonb_agg(to_jsonb(p) - 'store_id' - 'pricing' order by p.sort_order, p.name) from public.products p where p.store_id = p_store_id and p.active), '[]'::jsonb),
-    'groups', coalesce((select jsonb_agg(to_jsonb(g) - 'store_id' order by g.sort_order, g.name) from public.product_groups g where g.store_id = p_store_id), '[]'::jsonb),
-    'subgroups', coalesce((select jsonb_agg(to_jsonb(sg) - 'store_id' order by sg.sort_order, sg.name) from public.product_subgroups sg where sg.store_id = p_store_id), '[]'::jsonb),
-    'payment_methods', coalesce((select jsonb_agg(to_jsonb(pm) - 'store_id' order by pm.sort_order, pm.name) from public.payment_methods pm where pm.store_id = p_store_id and pm.active), '[]'::jsonb),
-    'printers', coalesce((select jsonb_agg(to_jsonb(pr) - 'store_id' order by pr.sort_order, pr.name) from public.printers pr where pr.store_id = p_store_id), '[]'::jsonb),
-    'terminals', coalesce((select jsonb_agg(to_jsonb(t) - 'store_id' order by t.sort_order, t.name) from public.terminals t where t.store_id = p_store_id and t.active), '[]'::jsonb),
+    'products', coalesce((select jsonb_agg(to_jsonb(p) - 'store_id' - 'pricing' order by p.created_at, p.id) from public.products p where p.store_id = p_store_id and p.active), '[]'::jsonb),
+    'groups', coalesce((select jsonb_agg(to_jsonb(g) - 'store_id' order by g.sort_order, g.created_at, g.id) from public.product_groups g where g.store_id = p_store_id), '[]'::jsonb),
+    'subgroups', coalesce((select jsonb_agg(to_jsonb(sg) - 'store_id' order by sg.created_at, sg.id) from public.product_subgroups sg where sg.store_id = p_store_id), '[]'::jsonb),
+    'payment_methods', coalesce((select jsonb_agg(to_jsonb(pm) - 'store_id' order by pm.sort_order, pm.created_at, pm.id) from public.payment_methods pm where pm.store_id = p_store_id and pm.active), '[]'::jsonb),
+    'printers', coalesce((select jsonb_agg(to_jsonb(pr) - 'store_id' order by pr.sort_order, pr.created_at, pr.id) from public.printers pr where pr.store_id = p_store_id), '[]'::jsonb),
+    'terminals', coalesce((select jsonb_agg(to_jsonb(t) - 'store_id' order by t.sort_order, t.created_at, t.id) from public.terminals t where t.store_id = p_store_id and t.active), '[]'::jsonb),
     'cash_session', (
       select to_jsonb(cs) from public.cash_sessions cs
       where cs.store_id = p_store_id and cs.terminal_id = p_terminal_id and cs.status = 'open'
