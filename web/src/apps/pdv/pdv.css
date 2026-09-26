@@ -1,0 +1,111 @@
+/*
+ * Caixa (PDV) — tokens próprios do caixa que não existem no tema
+ * compartilhado (cores do antigo pdv/styles.css) e animações da tela.
+ * As cores gerais (fundo, cartões, bordas, âmbar, perigo) vêm do tema
+ * `.dark.theme-pdv` em styles/globals.css.
+ */
+.theme-pdv {
+  /* barra superior "ardósia" com filete âmbar */
+  --pdv-header: #111215;
+  --pdv-header-foreground: #e2e8f0;
+
+  /* botão FINALIZAR VENDA */
+  --success-strong: #0b8a5f;
+  --success-strong-hover: #086b49;
+  --success-strong-foreground: #ffffff;
+
+  /* aba "Todos" selecionada */
+  --pdv-tab-all: #000000;
+  --pdv-tab-all-foreground: #ffffff;
+
+  /* ícones do menu lateral */
+  --pdv-icon-sangria: #9a6a38;
+  --pdv-icon-fechar: #505c8c;
+  --pdv-icon-cancel: #b86262;
+
+  /* papel das fichas / comprovantes (prévia de impressão) */
+  --paper-desk: #d4c9a8;
+  --paper: #f7eed8;
+  --paper-ink: #1a1008;
+  --paper-strong: #0f0800;
+  --paper-rule: #5a3e10;
+  --paper-sub: #3d2b00;
+  --paper-meta: #5a4020;
+  --paper-dash: #7a5a20;
+}
+
+/* Toque: todo botão do caixa "afunda" ao ser tocado (antigo button:active).
+   Vale também para diálogos e gavetas, que ficam fora da raiz do app. */
+.theme-pdv button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* Ficha em papel amarelado. */
+.pdv-paper {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(ellipse at 20% 80%, rgba(180, 140, 60, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(160, 120, 40, 0.1) 0%, transparent 60%);
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(100, 70, 20, 0.15);
+  border: 1.5px solid rgba(120, 85, 30, 0.25);
+  color: var(--paper-ink);
+}
+
+/* Barras de rolagem finas (grade de produtos, listas). */
+.pdv-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--input) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+.pdv-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.pdv-scroll::-webkit-scrollbar-thumb {
+  background: var(--input);
+  border-radius: 2px;
+}
+
+/* Abas de subgrupo: rolagem horizontal sem barra. */
+.pdv-no-scrollbar {
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.pdv-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes pdv-swipe-hint {
+  0% {
+    transform: translateX(-4px);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateX(4px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-4px);
+    opacity: 0.5;
+  }
+}
+
+@keyframes pdv-connection-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* Fundo desfocado atrás das gavetas (2 px) e dos modais (3 px), como no antigo. */
+.theme-pdv [data-slot="sheet-overlay"] {
+  backdrop-filter: blur(2px);
+}
+.theme-pdv [data-slot="dialog-overlay"],
+.theme-pdv [data-slot="alert-dialog-overlay"] {
+  backdrop-filter: blur(3px);
+}
