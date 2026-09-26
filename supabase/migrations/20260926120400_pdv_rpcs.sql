@@ -541,7 +541,7 @@ declare
   v_ticket jsonb;
   v_lines jsonb;
   v_jobs integer := 0;
-  v_printers text[] := '{}';
+  v_printers text[] := '{}'::text[];
   v_unprinted jsonb;
   r record;
 begin
