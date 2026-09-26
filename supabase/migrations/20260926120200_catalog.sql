@@ -207,7 +207,9 @@ begin
     return new;
   end if;
   select terminals_allowed into v_allowed from public.stores where id = new.store_id;
-  select count(*) into v_count from public.terminals where store_id = new.store_id and active;
+  -- Não conta o próprio terminal (reimportação/upsert de um já existente).
+  select count(*) into v_count from public.terminals
+   where store_id = new.store_id and active and id <> new.id;
   if v_count >= coalesce(v_allowed, 0) then
     raise exception 'Limite de % terminal(is) da licença atingido.', v_allowed
       using errcode = 'P0001';

@@ -11,3 +11,4 @@ supabase/.branches/
 test-results/
 playwright-report/
 bridge/.env
+.claude/worktrees/

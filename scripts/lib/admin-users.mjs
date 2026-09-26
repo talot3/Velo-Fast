@@ -24,12 +24,12 @@ export async function upsertAppUser(admin, { storeId, username, role, password, 
   const hash = passwordHash ?? (await bcrypt.hash(password, 10))
 
   let userId
-  const { data: existing } = await admin
-    .from("profiles")
-    .select("user_id")
-    .eq("username", name)
-    .filter("store_id", storeId === null ? "is" : "eq", storeId === null ? null : storeId)
-    .maybeSingle()
+  // Mesmo critério do índice único (sem diferenciar maiúsculas).
+  const pattern = name.replace(/[\\%_]/g, (c) => `\\${c}`)
+  let query = admin.from("profiles").select("user_id").ilike("username", pattern)
+  query = storeId === null ? query.is("store_id", null) : query.eq("store_id", storeId)
+  const { data: existing, error: findError } = await query.maybeSingle()
+  if (findError) throw findError
 
   if (existing) {
     userId = existing.user_id
