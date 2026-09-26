@@ -1,5 +1,5 @@
-import { MigrationPlaceholder } from "../placeholder"
+import { SwotPage } from "../features/gestao/swot"
 
 export default function Page() {
-  return <MigrationPlaceholder page="swot" />
+  return <SwotPage />
 }
