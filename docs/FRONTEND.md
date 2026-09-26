@@ -99,7 +99,7 @@ npm test                           # testes unitários (formatação, datas no f
 npm run test:backend               # testes do backend (com o banco local e o npm run dev rodando)
 ```
 
-Publicação (Supabase + Vercel) e virada da v1: [docs/DEPLOY.md](DEPLOY.md).
+Publicação (Supabase + Vercel) e virada da v1: [docs/DEPLOY.md](DEPLOY.md). Medições v1 × v2: [docs/DESEMPENHO.md](DESEMPENHO.md).
 
 Logins (loja DEMO): `admin`, `sup`, `caixa1` — senha `1234`. Master (gelic): `master` / `master123`.
 URLs: `/portal/?store=DEMO`, `/pdv/?store=DEMO&tid=CX1`, `/gelic/`.
