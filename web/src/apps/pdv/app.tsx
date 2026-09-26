@@ -1,21 +1,20 @@
-import { useMemo } from "react"
-import { QueryClientProvider } from "@tanstack/react-query"
-
 import { AuthGate } from "@/components/app/auth-gate"
 import { ConfirmProvider } from "@/components/app/confirm-dialog"
 import { ElevateProvider } from "@/components/app/elevate-dialog"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthProvider } from "@/lib/auth"
-import { createQueryClient } from "@/lib/query"
 
 import "./pdv.css"
 import { PdvApp } from "./pdv-app"
 
-/** Caixa (PDV). */
+/**
+ * Caixa (PDV). Não usa o cache de dados do portal (TanStack Query): o PDV
+ * fala com o banco por funções diretas (data/pdv.ts) e tem cache próprio
+ * para funcionar offline — assim não baixa essa biblioteca.
+ */
 export function App() {
-  const queryClient = useMemo(() => createQueryClient(), [])
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <AuthProvider minRole="operador">
         <ConfirmProvider>
           <ElevateProvider>
@@ -34,6 +33,6 @@ export function App() {
           classNames: { toast: "justify-center! rounded-[30px]! px-6! text-center! font-sans!", title: "text-sm! font-bold!" },
         }}
       />
-    </QueryClientProvider>
+    </>
   )
 }

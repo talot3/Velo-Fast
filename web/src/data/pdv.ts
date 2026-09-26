@@ -4,7 +4,7 @@
  * e são reenviados sozinhos.
  */
 import type { Database } from "@/data/database.types"
-import { toGroup, toPaymentMethod, toPrinter, toProduct, toSubgroup, toTerminal } from "@/data/catalog"
+import { toGroup, toPaymentMethod, toPrinter, toProduct, toSubgroup, toTerminal } from "@/data/catalog-mappers"
 import type {
   CashMovement,
   CashSession,
