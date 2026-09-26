@@ -797,8 +797,36 @@ begin
 end;
 $$;
 
+-- Últimas fichas do terminal (listas de reimpressão e cancelamento do PDV).
+-- Antes vinham do histórico de impressão salvo no navegador (50 itens).
+create or replace function public.pdv_recent_items(p_store_id text, p_terminal_id text, p_limit integer default 50)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  perform private.assert_store_access(p_store_id, 'operador');
+  return coalesce((
+    select jsonb_agg(x order by x.sold_at desc, x.line_no desc)
+    from (
+      select si.id, si.sale_id, si.line_no, si.product_id, si.product_name, si.unit_price, si.status,
+             si.print_count, si.printer_id, s.payment_label, s.operator_name, s.terminal_id, s.sold_at, s.kind
+      from public.sale_items si
+      join public.sales s on s.id = si.sale_id
+      where si.store_id = p_store_id
+        and s.terminal_id = p_terminal_id
+      order by s.sold_at desc, si.line_no desc
+      limit least(greatest(coalesce(p_limit, 50), 1), 200)
+    ) x
+  ), '[]'::jsonb);
+end;
+$$;
+
 -- ─── Permissões de execução ─────────────────────────────────────────
 revoke all on function
+  public.pdv_recent_items(text, text, integer),
   public.pdv_bootstrap(text, text),
   public.register_sale(jsonb),
   public.cancel_sale_items(text, uuid[], text),
@@ -816,6 +844,7 @@ revoke all on function
 from public, anon;
 
 grant execute on function
+  public.pdv_recent_items(text, text, integer),
   public.pdv_bootstrap(text, text),
   public.register_sale(jsonb),
   public.cancel_sale_items(text, uuid[], text),

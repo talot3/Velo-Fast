@@ -79,3 +79,33 @@ revoke all on function public.auth_set_password_hash(uuid, text) from public, an
 grant execute on function public.auth_login_lookup(text, text) to service_role;
 grant execute on function public.auth_login_result(uuid, boolean) to service_role;
 grant execute on function public.auth_set_password_hash(uuid, text) to service_role;
+
+-- Quem sou eu? Perfil + loja + situação da licença em uma chamada (usada
+-- pelos apps ao abrir, com a sessão já existente no navegador).
+create or replace function public.session_info()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'user_id', p.user_id,
+    'username', p.username,
+    'display_name', p.display_name,
+    'role', p.role,
+    'active', p.active,
+    'store_id', p.store_id,
+    'store_name', s.name,
+    'store_active', s.active,
+    'store_expire_date', s.expire_date,
+    'license_ok', p.role = 'master'
+      or (s.active and (s.expire_date is null or s.expire_date >= (now() at time zone 'America/Sao_Paulo')::date))
+  )
+  from public.profiles p
+  left join public.stores s on s.id = p.store_id
+  where p.user_id = (select auth.uid())
+$$;
+
+revoke all on function public.session_info() from public, anon;
+grant execute on function public.session_info() to authenticated;
