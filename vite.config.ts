@@ -82,7 +82,7 @@ function pdvServiceWorker(): Plugin {
       }
       visit(entry.fileName)
       for (const name of Object.keys(bundle)) if (/\.woff2?$/.test(name)) files.add(name)
-      const urls = ["/pdv/", "/pdv/manifest.webmanifest", "/pdv/icon.svg", ...[...files].map((f) => `/${f}`)]
+      const urls = ["/pdv/", "/pdv/manifest.json", "/pdv/icon.svg", ...[...files].map((f) => `/${f}`)]
       const version = createHash("sha256").update(urls.join("|")).digest("hex").slice(0, 12)
       this.emitFile({ type: "asset", fileName: "pdv/sw.js", source: pdvSwSource(version, urls) })
     },
