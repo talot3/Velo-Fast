@@ -1,5 +1,5 @@
-import { MigrationPlaceholder } from "../placeholder"
+import { DrePersonalizadaPage } from "../features/gestao/dre-personalizada"
 
 export default function Page() {
-  return <MigrationPlaceholder page="reportDrePersonalizada" />
+  return <DrePersonalizadaPage />
 }

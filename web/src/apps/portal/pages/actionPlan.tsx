@@ -1,5 +1,5 @@
-import { MigrationPlaceholder } from "../placeholder"
+import { ActionPlanPage } from "../features/gestao/action-plan"
 
 export default function Page() {
-  return <MigrationPlaceholder page="actionPlan" />
+  return <ActionPlanPage />
 }
