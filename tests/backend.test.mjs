@@ -3,7 +3,7 @@
 // e `npm run dev` rodando. Execute: node --test tests/backend.test.mjs
 import assert from "node:assert/strict"
 import { randomUUID } from "node:crypto"
-import { before, describe, test } from "node:test"
+import { after, before, describe, test } from "node:test"
 import { createClient } from "@supabase/supabase-js"
 
 import { adminClient, upsertAppUser } from "../scripts/lib/admin-users.mjs"
@@ -44,6 +44,19 @@ function saleItem(productId, price) {
 }
 
 let op, sup, adm, bob, master
+/** Lojas criadas durante os testes (além de A, B, EXPIRED e BLOCKED). */
+const extraStores = []
+
+// Cada execução apaga o que criou: lojas (em cascata: catálogo, vendas,
+// fila…) e os usuários do Auth dessas lojas e o master do teste.
+after(async () => {
+  const stores = [A, B, EXPIRED, BLOCKED, ...extraStores]
+  const { data: storeUsers } = await admin.from("profiles").select("user_id").in("store_id", stores)
+  const { data: masters } = await admin.from("profiles").select("user_id").is("store_id", null).eq("username", `root${RUN}`)
+  for (const { user_id } of [...(storeUsers ?? []), ...(masters ?? [])]) await admin.auth.admin.deleteUser(user_id)
+  const { error } = await admin.from("stores").delete().in("id", stores)
+  assert.ifError(error)
+})
 
 before(async () => {
   const today = new Date()
@@ -369,6 +382,7 @@ describe("painel master", () => {
     assert.ifError(created.error)
     assert.equal(created.data.name, "RESTAURANTE TESTE")
     assert.ok(Number(created.data.id) > 16000)
+    extraStores.push(created.data.id)
 
     const updated = await master.client.rpc("master_update_store", { p_store_id: created.data.id, p_active: false, p_terminals_allowed: 3 })
     assert.equal(updated.data.active, false)
