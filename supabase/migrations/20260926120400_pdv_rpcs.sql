@@ -797,6 +797,22 @@ begin
 end;
 $$;
 
+-- Revoga uma chave de ponte (perdida, de teste, computador trocado): a ponte
+-- que a usa para de receber a fila na hora. Só o admin da loja.
+create or replace function public.revoke_printer_bridge(p_store_id text, p_bridge_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  perform private.assert_store_access(p_store_id, 'admin');
+  update public.printer_bridges set active = false
+   where id = p_bridge_id and store_id = p_store_id and active;
+  return found;
+end;
+$$;
+
 -- Últimas fichas do terminal (listas de reimpressão e cancelamento do PDV).
 -- Antes vinham do histórico de impressão salvo no navegador (50 itens).
 create or replace function public.pdv_recent_items(p_store_id text, p_terminal_id text, p_limit integer default 50)
@@ -840,7 +856,8 @@ revoke all on function
   public.print_test(text, text),
   public.bridge_claim_jobs(text, integer),
   public.bridge_ack_job(text, bigint, boolean, text),
-  public.create_printer_bridge(text, text)
+  public.create_printer_bridge(text, text),
+  public.revoke_printer_bridge(text, uuid)
 from public, anon;
 
 grant execute on function
@@ -856,7 +873,8 @@ grant execute on function
   public.print_cash_movement(text, uuid),
   public.print_cash_closing(text, uuid),
   public.print_test(text, text),
-  public.create_printer_bridge(text, text)
+  public.create_printer_bridge(text, text),
+  public.revoke_printer_bridge(text, uuid)
 to authenticated;
 
 -- A ponte usa a chave publishable (papel anon) + a própria chave.

@@ -373,6 +373,29 @@ describe("impressão e ponte", () => {
   })
 })
 
+describe("revogar chave da ponte", () => {
+  test("chave revogada não busca mais a fila; operador não revoga", async () => {
+    const { data: bridge, error } = await adm.client.rpc("create_printer_bridge", { p_store_id: A, p_name: "Ponte a revogar" })
+    assert.ifError(error)
+    const bridgeClient = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false } })
+    const before = await bridgeClient.rpc("bridge_claim_jobs", { p_key: bridge.api_key, p_limit: 1 })
+    assert.ifError(before.error)
+
+    const byOperator = await op.client.rpc("revoke_printer_bridge", { p_store_id: A, p_bridge_id: bridge.id })
+    assert.equal(byOperator.error?.code, "42501")
+
+    const revoked = await adm.client.rpc("revoke_printer_bridge", { p_store_id: A, p_bridge_id: bridge.id })
+    assert.ifError(revoked.error)
+    assert.equal(revoked.data, true)
+    const after = await bridgeClient.rpc("bridge_claim_jobs", { p_key: bridge.api_key, p_limit: 1 })
+    assert.equal(after.error?.code, "28000")
+
+    const { data: listed } = await adm.client.from("printer_bridges").select("name, active, key_prefix").eq("id", bridge.id).single()
+    assert.equal(listed.active, false)
+    assert.ok(bridge.api_key.startsWith(listed.key_prefix))
+  })
+})
+
 describe("painel master", () => {
   test("só o master lista e cria lojas, com código sequencial", async () => {
     const denied = await adm.client.rpc("master_list_stores")

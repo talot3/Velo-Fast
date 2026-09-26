@@ -36,6 +36,8 @@ legacy/                   sistema antigo (referência; não é publicado)
   `REGISTRY_URL=http://127.0.0.1:8765/r npx shadcn@latest add <nome> --yes`
 - Cores **semânticas**: `bg-primary`, `text-muted-foreground`, `bg-card`, `text-destructive`,
   `text-success`, `text-warning`… Nunca `bg-blue-500`, nunca `dark:` manual (o tema já troca).
+  No modo claro, `text-primary` e `text-warning` viram automaticamente um âmbar escuro legível
+  (`--brand-text`); fundos e botões âmbar não mudam.
   Cores vindas de dados (cor do botão do subgrupo/forma de pagamento) podem ir em `style`.
 - Espaçamento com `flex`/`grid` + `gap-*` (nunca `space-x/space-y`). `size-*` quando largura = altura.
   `truncate` para cortar texto.
@@ -53,13 +55,15 @@ legacy/                   sistema antigo (referência; não é publicado)
 
 ## Dados (`web/src/data`)
 
-Telas **não** chamam `supabase()` diretamente — usam os hooks:
+Telas **não** chamam `supabase()` diretamente — usam os hooks. O cliente do navegador (`lib/supabase.ts`) é
+enxuto (auth-js + postgrest-js): **não importe `@supabase/supabase-js` no navegador** (ele traz realtime,
+storage e functions, que o VELO não usa). Para gravar uma sessão em outro app, use `new Supabase(storageKeyFor(app))`.
 
 | arquivo | o que oferece |
 |---|---|
-| `catalog.ts` | `useProducts/useSaveProducts/useRemoveProducts`, idem para `Groups`, `Subgroups`, `PaymentMethods`, `Printers`, `Terminals`; `usePrintTest`, `useCreatePrinterBridge`. Salvar = upsert de 1 ou vários itens. IDs novos: `newId()` (terminais: `"CX" + número`). |
+| `catalog.ts` | `useProducts/useSaveProducts/useRemoveProducts`, idem para `Groups`, `Subgroups`, `PaymentMethods`, `Printers`, `Terminals`; `usePrintTest`, `useCreatePrinterBridge`, `usePrinterBridges`, `useRevokePrinterBridge`. Salvar = upsert de 1 ou vários itens. IDs novos: `newId()` (terminais: `"CX" + número`). |
 | `settings.ts` | `useStoreSettings` (ticket, versão atual, histórico), `useSaveStoreSettings(patch)`, `useStoreName`, `DEFAULT_TICKET`. |
-| `records.ts` | `useRecords(coleção, seed?)`, `useSaveRecords`, `useRemoveRecords`, `useDocument(chave, padrão)`, `useSaveDocument`, `newNumericId()`. Coleções: `plano_contas, centros_custo, contas_financeiras, lancamentos, borderos, cargos, dre_lines, compliance_*, skills_*`; documentos: `swot, action_plan`. Com `seed`, a tela mostra os exemplos do sistema antigo enquanto a coleção está vazia; a primeira gravação persiste os exemplos junto. |
+| `records.ts` | `useRecords(coleção, seed?)`, `useSaveRecords`, `useRemoveRecords`, `useDocument(chave, padrão)`, `useSaveDocument`, `newNumericId()`. Coleções: `plano_contas, centros_custo, contas_financeiras, lancamentos, borderos, cargos, dre_lines, compliance_*, skills_*`; documentos: `swot, action_plan`. Com `seed`, a tela mostra os exemplos do sistema antigo enquanto a coleção **nunca foi usada**; a primeira gravação ou exclusão persiste os exemplos junto e grava a linha-marcador `__init__` — depois disso, lista vazia fica vazia (como na v1). Gravações da mesma coleção rodam em fila e já atualizam o cache. |
 | `reports.ts` | `useSalesByProduct`, `useSalesByTerminal`, `useCashClosingReport`, `useDashboard`, `useCashMovements` (sangrias), `useCashSessions` (base dos borderôs), `useSalesCount`, `exportStoreData`. Tudo calculado no banco. |
 | `users.ts` | `useStoreUsers`, `useCreateUser`, `useUpdateUser`, `useSetUserPassword` (via `/api/users`). |
 | `master.ts` | `useMasterStores`, `useCreateStore`, `useUpdateStore`. |
@@ -91,6 +95,7 @@ Confirmações: `const confirm = useConfirm(); if (!(await confirm("Remover este
 npx supabase start                 # banco local (Docker)
 npx supabase db reset && node scripts/seed-dev.mjs   # schema + loja DEMO
 npm run dev                        # http://127.0.0.1:5173
+npm test                           # testes unitários (formatação, datas no fuso de SP…)
 npm run test:backend               # testes do backend (com o banco local e o npm run dev rodando)
 ```
 

@@ -432,6 +432,9 @@ isOneToOne: false
 "export_store_data":
 { Args: { "p_store_id": string }; Returns: Json
                            },
+"legacy_export_state":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "master_create_store":
 { Args: { "p_cnpj": string,"p_expire_date"?: string,"p_name": string,"p_phone"?: string,"p_terminals_allowed"?: number }; Returns: Json
                            },
@@ -476,6 +479,9 @@ isOneToOne: false
                            },
 "report_sales_by_terminal":
 { Args: { "p_from": string,"p_store_id": string,"p_to": string }; Returns: Json
+                           },
+"revoke_printer_bridge":
+{ Args: { "p_bridge_id": string,"p_store_id": string }; Returns: boolean
                            },
 "session_info":
 { Args: Record<PropertyKey, never>; Returns: Json

@@ -56,6 +56,8 @@ export function CrudDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        // Sem descrição: não repete o título como descrição oculta (leitores de tela liam duas vezes).
+        {...(description ? {} : { "aria-describedby": undefined })}
         className={cn(
           "flex max-h-[92vh] flex-col gap-0 p-0 max-sm:h-full max-sm:max-h-full max-sm:max-w-full max-sm:rounded-none",
           size === "lg" ? "sm:max-w-[min(980px,96vw)]" : "sm:max-w-[min(640px,96vw)]"
@@ -66,7 +68,7 @@ export function CrudDialog({
             {headerExtra}
             <div className="flex flex-col gap-1">
               <DialogTitle>{title}</DialogTitle>
-              {description ? <DialogDescription>{description}</DialogDescription> : <DialogDescription className="sr-only">{title}</DialogDescription>}
+              {description ? <DialogDescription>{description}</DialogDescription> : null}
             </div>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>

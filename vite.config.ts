@@ -151,15 +151,15 @@ export default defineConfig(({ mode }) => {
           gelic: path.resolve(webDir, "gelic/index.html"),
         },
         output: {
-          // Bibliotecas que quase nunca mudam ficam em arquivos próprios: um
-          // deploy que só mexe nas telas não obriga os aparelhos a baixá-las
-          // de novo. entriesAware separa o que só o portal usa, para o PDV
-          // não baixar bibliotecas que não usa.
+          // As duas maiores bibliotecas, que quase nunca mudam, ficam em
+          // arquivos próprios: um deploy que só mexe nas telas não obriga os
+          // aparelhos a baixá-las de novo. O resto fica com a divisão padrão
+          // (medido: separar mais bibliotecas gerava dezenas de arquivos
+          // pequenos e mais bytes no total).
           codeSplitting: {
             groups: [
-              { name: "react", test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/, priority: 3 },
-              { name: "supabase", test: /node_modules[\\/]@supabase[\\/]/, priority: 2 },
-              { name: "vendor", test: /node_modules[\\/]/, entriesAware: true, priority: 1 },
+              { name: "react", test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/, priority: 2 },
+              { name: "supabase", test: /node_modules[\\/]@supabase[\\/]/, priority: 1 },
             ],
           },
         },

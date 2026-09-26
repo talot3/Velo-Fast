@@ -298,11 +298,61 @@ export function usePrintTest() {
 /** Gera a chave de uma nova ponte de impressão (mostrada uma única vez). */
 export function useCreatePrinterBridge() {
   const storeId = useStoreId()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: async (name: string) => {
       const { data, error } = await supabase().rpc("create_printer_bridge", { p_store_id: storeId, p_name: name })
       if (error) throw error
       return data as { id: string; api_key: string; store_id: string }
     },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["printer_bridges", storeId] }),
+  })
+}
+
+export type PrinterBridge = {
+  id: string
+  name: string
+  keyPrefix: string
+  active: boolean
+  lastSeenAt: string | null
+  createdAt: string
+}
+
+/** Chaves de ponte da loja (só admin enxerga; a chave em si nunca sai do banco). */
+export function usePrinterBridges(enabled = true) {
+  const storeId = useStoreId()
+  return useQuery({
+    queryKey: ["printer_bridges", storeId],
+    enabled,
+    refetchInterval: enabled ? 15_000 : false,
+    queryFn: async (): Promise<PrinterBridge[]> => {
+      const { data, error } = await supabase()
+        .from("printer_bridges")
+        .select("id, name, key_prefix, active, last_seen_at, created_at")
+        .eq("store_id", storeId)
+        .order("created_at", { ascending: false })
+      if (error) throw error
+      return data.map((b) => ({
+        id: b.id,
+        name: b.name,
+        keyPrefix: b.key_prefix,
+        active: b.active,
+        lastSeenAt: b.last_seen_at,
+        createdAt: b.created_at,
+      }))
+    },
+  })
+}
+
+/** Revoga uma chave: a ponte que a usa para de receber a fila na hora. */
+export function useRevokePrinterBridge() {
+  const storeId = useStoreId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (bridgeId: string) => {
+      const { error } = await supabase().rpc("revoke_printer_bridge", { p_store_id: storeId, p_bridge_id: bridgeId })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["printer_bridges", storeId] }),
   })
 }

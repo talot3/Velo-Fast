@@ -1,8 +1,10 @@
-import { useRef, useState, type FormEvent } from "react"
+import { Fragment, useRef, useState, type FormEvent } from "react"
 import { CheckIcon, CopyIcon, KeyRoundIcon, TriangleAlertIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { useConfirm } from "@/components/app/confirm-dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,11 +17,14 @@ import {
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGroupTextarea } from "@/components/ui/input-group"
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemSeparator, ItemTitle } from "@/components/ui/item"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
-import { useCreatePrinterBridge } from "@/data/catalog"
+import { useCreatePrinterBridge, usePrinterBridges, useRevokePrinterBridge, type PrinterBridge } from "@/data/catalog"
 import { useStoreId } from "@/lib/auth"
 import { env } from "@/lib/env"
 import { errorMessage } from "@/lib/errors"
+import { formatDateTimeBR } from "@/lib/format"
 
 type Props = { open: boolean; onOpenChange: (open: boolean) => void }
 
@@ -51,6 +56,87 @@ async function copyText(text: string, fallback: HTMLTextAreaElement | null): Pro
       return false
     }
   }
+}
+
+/** Online = consultou a fila nos últimos 30 s (a ponte consulta a cada 2 s). */
+function bridgeStatus(b: PrinterBridge): { label: string; online: boolean } {
+  if (!b.lastSeenAt) return { label: "Nunca conectou", online: false }
+  if (Date.now() - new Date(b.lastSeenAt).getTime() < 30_000) return { label: "Online", online: true }
+  return { label: `Última conexão: ${formatDateTimeBR(b.lastSeenAt)}`, online: false }
+}
+
+/**
+ * Chaves já geradas, com a situação de cada ponte. Revogar corta a ponte na
+ * hora (chave perdida, de teste, computador trocado).
+ */
+function BridgeKeys() {
+  const bridges = usePrinterBridges()
+  const revoke = useRevokePrinterBridge()
+  const confirm = useConfirm()
+
+  async function onRevoke(bridge: PrinterBridge) {
+    const ok = await confirm(
+      `Revogar a chave "${bridge.name}"? A ponte que usa esta chave para de imprimir até receber uma chave nova.`,
+      { destructive: true, confirmLabel: "Revogar" }
+    )
+    if (!ok) return
+    try {
+      await revoke.mutateAsync(bridge.id)
+      toast.success("Chave revogada.")
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
+  if (bridges.isLoading) return <Skeleton className="h-16 w-full" />
+  const list = bridges.data ?? []
+  if (list.length === 0) return null
+  return (
+    <Field>
+      <FieldLabel>Chaves já geradas</FieldLabel>
+      <ItemGroup className="max-h-56 overflow-y-auto rounded-md border">
+        {list.map((b, i) => {
+          const status = bridgeStatus(b)
+          return (
+            <Fragment key={b.id}>
+              {i > 0 ? <ItemSeparator /> : null}
+              <Item size="sm">
+                <ItemContent className="min-w-0">
+                  <ItemTitle className="flex-wrap">
+                    <span className="truncate">{b.name}</span>
+                    {!b.active ? (
+                      <Badge variant="secondary">Revogada</Badge>
+                    ) : status.online ? (
+                      <Badge variant="outline" className="border-success text-success">
+                        Online
+                      </Badge>
+                    ) : null}
+                  </ItemTitle>
+                  <ItemDescription className="truncate">
+                    <span className="font-mono">{b.keyPrefix}…</span> · {b.active ? status.label : `Criada em ${formatDateTimeBR(b.createdAt)}`}
+                  </ItemDescription>
+                </ItemContent>
+                {b.active ? (
+                  <ItemActions>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={revoke.isPending}
+                      onClick={() => void onRevoke(b)}
+                    >
+                      Revogar
+                    </Button>
+                  </ItemActions>
+                ) : null}
+              </Item>
+            </Fragment>
+          )
+        })}
+      </ItemGroup>
+      <FieldDescription>Revogue a chave de um computador que não é mais usado ou de uma chave perdida.</FieldDescription>
+    </Field>
+  )
 }
 
 /**
@@ -148,6 +234,7 @@ export function PrinterBridgeDialog({ open, onOpenChange }: Props) {
                 <FieldLabel htmlFor="bridge-name">Nome da Ponte</FieldLabel>
                 <Input id="bridge-name" value={name} placeholder={`Ponte ${storeId}`} onChange={(e) => setName(e.target.value)} />
               </Field>
+              <BridgeKeys />
             </FieldGroup>
           )}
 
