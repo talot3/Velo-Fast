@@ -1,0 +1,12 @@
+{
+  "name": "VELO | Portal Gestor",
+  "short_name": "VELO Portal",
+  "description": "Painel Administrativo e Relatórios VELO",
+  "start_url": "/portal/",
+  "scope": "/portal/",
+  "display": "standalone",
+  "background_color": "#141416",
+  "theme_color": "#141416",
+  "orientation": "any",
+  "icons": [{ "src": "/portal/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

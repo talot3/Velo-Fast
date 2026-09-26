@@ -1,0 +1,9 @@
+{
+  "name": "velo-bridge",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Ponte de impressão local do VELO FAST (sem dependências)",
+  "type": "commonjs",
+  "engines": { "node": ">=18" },
+  "scripts": { "start": "node velo-bridge.js" }
+}

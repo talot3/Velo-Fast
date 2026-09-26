@@ -1,0 +1,12 @@
+{
+  "name": "VELO | Caixa PDV",
+  "short_name": "VELO PDV",
+  "description": "Terminal de Vendas Frente de Caixa VELO",
+  "start_url": "/pdv/",
+  "scope": "/pdv/",
+  "display": "standalone",
+  "background_color": "#14161b",
+  "theme_color": "#14161b",
+  "orientation": "any",
+  "icons": [{ "src": "/pdv/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
