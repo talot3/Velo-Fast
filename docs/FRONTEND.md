@@ -91,8 +91,10 @@ Confirmações: `const confirm = useConfirm(); if (!(await confirm("Remover este
 npx supabase start                 # banco local (Docker)
 npx supabase db reset && node scripts/seed-dev.mjs   # schema + loja DEMO
 npm run dev                        # http://127.0.0.1:5173
-node --test tests/backend.test.mjs # testes do backend
+npm run test:backend               # testes do backend (com o banco local e o npm run dev rodando)
 ```
+
+Publicação (Supabase + Vercel) e virada da v1: [docs/DEPLOY.md](DEPLOY.md).
 
 Logins (loja DEMO): `admin`, `sup`, `caixa1` — senha `1234`. Master (gelic): `master` / `master123`.
 URLs: `/portal/?store=DEMO`, `/pdv/?store=DEMO&tid=CX1`, `/gelic/`.

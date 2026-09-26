@@ -1,7 +1,11 @@
+import { env } from "@/lib/env"
+
 /**
  * Loja e terminal deste dispositivo. Igual ao sistema anterior: definidos
- * uma vez pela URL (?store=15521&tid=CX001) e lembrados no navegador. Para
- * usuários de loja, o login confirma a loja real (vinda do banco).
+ * uma vez pela URL (?store=15521&tid=CX001) e lembrados no navegador; sem
+ * isso, vale a loja padrão da instalação (VITE_DEFAULT_STORE_ID, como o
+ * DEFAULT_STORE_ID da v1). Para usuários de loja, o login confirma a loja
+ * real (vinda do banco).
  */
 const STORE_KEY = "velofast_store_id"
 const TERMINAL_KEY = "tp_tid"
@@ -19,7 +23,7 @@ function readParam(name: string): string | null {
 })()
 
 export function getStoreId(): string | null {
-  return localStorage.getItem(STORE_KEY)
+  return localStorage.getItem(STORE_KEY) || env.defaultStoreId
 }
 
 export function setStoreId(storeId: string) {
