@@ -19,7 +19,7 @@ import type {
   TicketConfig,
   Version,
 } from "@/data/types"
-import { isNetworkError } from "@/lib/errors"
+import { isNetworkError, isSessionError } from "@/lib/errors"
 import { enqueue, flushQueue, pendingCount, type QueueItem, type RunResult } from "@/lib/offline-queue"
 import { supabase, type Supabase } from "@/lib/supabase"
 
@@ -43,7 +43,8 @@ export type PdvCatalog = {
   offline: boolean
 }
 
-const cacheKey = (storeId: string) => `velofast_pdv_catalog_${storeId}`
+// Por loja E terminal: o bootstrap traz o caixa aberto deste terminal.
+const cacheKey = (storeId: string, terminalId: string) => `velofast_pdv_catalog_${storeId}_${terminalId}`
 
 type BootstrapRaw = {
   store: { id: string; name: string } | null
@@ -86,13 +87,13 @@ export async function loadPdv(storeId: string, terminalId: string): Promise<PdvC
     if (error) throw error
     const raw = data as unknown as BootstrapRaw
     try {
-      localStorage.setItem(cacheKey(storeId), JSON.stringify(raw))
+      localStorage.setItem(cacheKey(storeId, terminalId), JSON.stringify(raw))
     } catch {
       // armazenamento cheio: segue sem cache
     }
     return mapBootstrap(raw, false)
   } catch (error) {
-    const cached = localStorage.getItem(cacheKey(storeId))
+    const cached = localStorage.getItem(cacheKey(storeId, terminalId))
     if (cached && isNetworkError(error)) return mapBootstrap(JSON.parse(cached) as BootstrapRaw, true)
     throw error
   }
@@ -150,7 +151,9 @@ async function sendOrQueue<T>(op: QueueItem["op"], fn: string, args: Record<stri
     const data = (await callRpc(supabase(), fn, args)) as T
     return { queued: false, data }
   } catch (error) {
-    if (!isNetworkError(error)) throw error
+    // Sem rede, ou sessão vencida bem na volta da rede: guarda na fila, que
+    // reenvia depois de renovar o token (a operação é idempotente).
+    if (!isNetworkError(error) && !isSessionError(error)) throw error
     const { op: o, args: a } = queueArgs(op, args)
     await enqueue(o, a)
     return { queued: true }
@@ -207,22 +210,30 @@ const OP_TO_FN: Record<QueueItem["op"], string> = {
   close_cash_session: "close_cash_session",
 }
 
-/** Reenvia a fila offline (uma aba por vez). Devolve quantos itens foram enviados. */
-export function syncOfflineQueue() {
+/**
+ * Reenvia a fila offline (uma aba por vez). Devolve quantos itens foram
+ * enviados. `wait`: se já houver um envio em andamento, espera ele terminar
+ * (necessário antes de imprimir/consultar o que acabou de ser vendido).
+ */
+export function syncOfflineQueue(options: { wait?: boolean } = {}) {
   return flushQueue(async (item) => {
     try {
       await callRpc(supabase(), OP_TO_FN[item.op], item.args)
       return { result: "done" as RunResult }
     } catch (error) {
-      if (isNetworkError(error)) return { result: "retry" as RunResult, error: String((error as Error).message ?? error) }
+      // Sem rede ou sessão vencida (volta da rede antes de renovar o token):
+      // tenta de novo depois — nunca marca a operação como falha por isso.
+      if (isNetworkError(error) || isSessionError(error)) {
+        return { result: "retry" as RunResult, error: String((error as Error).message ?? error) }
+      }
       return { result: "fail" as RunResult, error: (error as Error).message ?? String(error) }
     }
-  })
+  }, options)
 }
 
 // ─── Consultas e ações que exigem rede ──────────────────────────────
 export async function cashSummary(storeId: string, sessionId: string): Promise<CashSummary> {
-  await syncOfflineQueue()
+  await syncOfflineQueue({ wait: true })
   return (await callRpc(supabase(), "cash_session_summary", { p_store_id: storeId, p_session_id: sessionId })) as CashSummary
 }
 
@@ -234,12 +245,12 @@ export type PrintResult = { jobs: number; printers: string[]; unprinted: string[
 
 /** Envia fichas para a fila de impressão (ponte local). Precisa de rede. */
 export async function printSaleItems(storeId: string, itemIds: string[], reprint = false): Promise<PrintResult> {
-  await syncOfflineQueue()
+  await syncOfflineQueue({ wait: true })
   return (await callRpc(supabase(), "print_sale_items", { p_store_id: storeId, p_item_ids: itemIds, p_reprint: reprint })) as PrintResult
 }
 
 export async function printCashMovement(storeId: string, movementId: string) {
-  await syncOfflineQueue()
+  await syncOfflineQueue({ wait: true })
   return (await callRpc(supabase(), "print_cash_movement", { p_store_id: storeId, p_movement_id: movementId })) as {
     queued: boolean
     printer_name: string | null
@@ -247,7 +258,7 @@ export async function printCashMovement(storeId: string, movementId: string) {
 }
 
 export async function printCashClosing(storeId: string, sessionId: string) {
-  await syncOfflineQueue()
+  await syncOfflineQueue({ wait: true })
   return (await callRpc(supabase(), "print_cash_closing", { p_store_id: storeId, p_session_id: sessionId })) as {
     queued: boolean
     printer_name: string | null

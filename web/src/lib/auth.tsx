@@ -1,9 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 
 import { apiPost } from "@/lib/api"
-import { errorMessage } from "@/lib/errors"
+import { errorMessage, isNetworkError } from "@/lib/errors"
 import { getStoreId, setStoreId } from "@/lib/store-context"
-import { supabase } from "@/lib/supabase"
+import { isOffline, readStoredSession, setOfflineMode, supabase } from "@/lib/supabase"
 
 export type Role = "operador" | "supervisor" | "admin" | "master"
 
@@ -112,42 +112,84 @@ export function AuthProvider({ minRole, scope = "store", children }: AuthProvide
 
   useEffect(() => {
     let cancelled = false
+    const client = supabase()
+    // Modo offline (PDV sem internet): só com a sessão guardada E o perfil em
+    // cache do MESMO usuário. Licença, papel e usuário ativo são conferidos no
+    // servidor assim que a rede voltar.
+    const stored = readStoredSession(client.storageKey)
+    const cached = readCachedProfile(client.storageKey)
+    const canOpenOffline = Boolean(
+      stored && cached && cached.userId === stored.userId && hasRole(cached.role, minRole) && (scope !== "master" || cached.role === "master")
+    )
+    let offline = false
+    const openOffline = () => {
+      if (offline || cancelled || !cached) return
+      offline = true
+      setOfflineMode(true)
+      setProfile(cached)
+      setStatus("signed-in")
+    }
+    const confirmOnline = async () => {
+      if (offline) {
+        // A rede voltou: renova o token guardado (vencido) antes de conferir.
+        const { data } = await client.auth.getSession()
+        if (cancelled || !data.session) return false
+        setOfflineMode(false)
+      }
+      const { data: info, error } = await client.rpc("session_info")
+      if (cancelled) return false
+      if (error) return false
+      offline = false
+      setOfflineMode(false)
+      await applyInfo(info as SessionInfo)
+      return true
+    }
+
     ;(async () => {
-      const { data } = await supabase().auth.getSession()
+      if (canOpenOffline && isOffline()) openOffline()
+      // Com o token vencido e sem rede, o auth-js tenta renovar por ~30 s:
+      // depois de 4 s o PDV abre offline e a conferência continua por trás.
+      const timer = canOpenOffline ? setTimeout(openOffline, 4000) : undefined
+      const { data, error } = await client.auth.getSession()
+      clearTimeout(timer)
       if (cancelled) return
       if (!data.session) {
+        // Renovação falhou só por falta de rede: a sessão continua guardada.
+        if (canOpenOffline && error && isNetworkError(error) && readStoredSession(client.storageKey)) return openOffline()
+        if (offline) return void signOutLocal(null)
         setStatus("signed-out")
         return
       }
-      const { data: info, error } = await supabase().rpc("session_info")
-      if (cancelled) return
-      if (error) {
-        // Sem rede: mantém a sessão salva e deixa o app abrir (PDV offline).
-        const cached = readCachedProfile()
-        if (cached && hasRole(cached.role, minRole)) {
-          setProfile(cached)
-          setStatus("signed-in")
-          return
-        }
-        setStatus("signed-out")
-        return
+      if (!(await confirmOnline()) && !cancelled) {
+        // Sem rede para conferir o perfil: abre com o cache (mesmo usuário).
+        if (canOpenOffline) openOffline()
+        else setStatus("signed-out")
       }
-      await applyInfo(info as SessionInfo)
     })()
-    const { data: sub } = supabase().auth.onAuthStateChange((event) => {
+    const { data: sub } = client.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
+        offline = false
+        setOfflineMode(false)
         setProfile(null)
         setStatus("signed-out")
       }
+      // A rede voltou e a sessão foi renovada: confere perfil e licença.
+      // (fora do callback: o auth-js pede para não chamar o cliente aqui dentro)
+      if (event === "TOKEN_REFRESHED" && offline) setTimeout(() => void confirmOnline(), 0)
     })
+    const onOnline = () => {
+      if (offline) void confirmOnline()
+    }
+    window.addEventListener("online", onOnline)
     return () => {
       cancelled = true
       sub.subscription.unsubscribe()
+      window.removeEventListener("online", onOnline)
     }
-  }, [applyInfo, minRole])
+  }, [applyInfo, minRole, scope, signOutLocal])
 
   useEffect(() => {
-    if (profile) writeCachedProfile(profile)
+    if (profile) writeCachedProfile(supabase().storageKey, profile)
   }, [profile])
 
   const login = useCallback(
@@ -174,7 +216,7 @@ export function AuthProvider({ minRole, scope = "store", children }: AuthProvide
   )
 
   const logout = useCallback(async () => {
-    clearCachedProfile()
+    clearCachedProfile(supabase().storageKey)
     await signOutLocal(null)
   }, [signOutLocal])
 
@@ -212,29 +254,29 @@ export function useStoreId(): string {
   return storeId
 }
 
-// Perfil em cache para abrir o PDV sem internet com a sessão salva.
-const PROFILE_CACHE_KEY = "velofast_profile_cache"
+// Perfil em cache (um por app) para abrir o PDV sem internet com a sessão salva.
+const profileCacheKey = (storageKey: string | null) => `${storageKey ?? "velofast"}:profile`
 
-function readCachedProfile(): Profile | null {
+function readCachedProfile(storageKey: string | null): Profile | null {
   try {
-    const raw = localStorage.getItem(PROFILE_CACHE_KEY)
+    const raw = localStorage.getItem(profileCacheKey(storageKey))
     return raw ? (JSON.parse(raw) as Profile) : null
   } catch {
     return null
   }
 }
 
-function writeCachedProfile(profile: Profile) {
+function writeCachedProfile(storageKey: string | null, profile: Profile) {
   try {
-    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile))
+    localStorage.setItem(profileCacheKey(storageKey), JSON.stringify(profile))
   } catch {
     // armazenamento cheio/bloqueado: só perde o modo offline do login
   }
 }
 
-function clearCachedProfile() {
+function clearCachedProfile(storageKey: string | null) {
   try {
-    localStorage.removeItem(PROFILE_CACHE_KEY)
+    localStorage.removeItem(profileCacheKey(storageKey))
   } catch {
     // ignore
   }

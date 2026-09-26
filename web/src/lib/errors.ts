@@ -22,3 +22,10 @@ export function isNetworkError(error: unknown): boolean {
   if (typeof e.status === "number" && (e.status === 0 || e.status >= 500)) return true
   return Boolean(e.message && /Failed to fetch|NetworkError|Load failed|fetch failed|timeout/i.test(e.message))
 }
+
+/** true quando o servidor recusou a sessão (token vencido/inválido): renovar e tentar de novo. */
+export function isSessionError(error: unknown): boolean {
+  if (!error) return false
+  const e = error as { code?: string; status?: number; message?: string }
+  return e.code === "PGRST301" || e.code === "PGRST303" || e.status === 401 || /JWT expired/i.test(e.message ?? "")
+}

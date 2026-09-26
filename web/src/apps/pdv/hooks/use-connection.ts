@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import { enqueue, listQueue, onQueueChange, removeItem, type QueueItem } from "@/lib/offline-queue"
+import { listQueue, onQueueChange, retryItem, type QueueItem } from "@/lib/offline-queue"
 
 import { alertNotify } from "../lib/notify"
 import { flushPending, syncNow } from "../lib/sync"
@@ -80,8 +80,7 @@ export function useConnection(): ConnectionState {
   const retryFailed = useCallback(async () => {
     const failed = (await listQueue()).filter((i) => i.failed)
     for (const item of failed) {
-      await removeItem(item.key)
-      await enqueue(item.op, item.args)
+      await retryItem(item.key)
     }
     await flushPending()
     await refresh()

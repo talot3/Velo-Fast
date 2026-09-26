@@ -61,13 +61,27 @@ export async function removeItem(key: string) {
   emit()
 }
 
+/** Devolve uma falha à fila no MESMO lugar (a ordem original é mantida). */
+export async function retryItem(key: string) {
+  const item = (await listQueue()).find((i) => i.key === key)
+  if (!item) return
+  await set(key, { ...item, failed: false, lastError: undefined }, store)
+  emit()
+}
+
 export type RunResult = "done" | "retry" | "fail"
 
 /**
  * Esvazia a fila em ordem. `run` devolve "done" (remove), "retry" (para e
  * tenta depois — sem rede) ou "fail" (marca como falha e segue).
+ * Com `wait`, se outro envio estiver em andamento, espera ele terminar e envia
+ * o que restar (ex.: antes de imprimir a venda recém-enfileirada); sem `wait`,
+ * desiste na hora (envios de fundo).
  */
-export async function flushQueue(run: (item: QueueItem) => Promise<{ result: RunResult; error?: string }>) {
+export async function flushQueue(
+  run: (item: QueueItem) => Promise<{ result: RunResult; error?: string }>,
+  options: { wait?: boolean } = {}
+) {
   const work = async () => {
     const items = await listQueue()
     let sent = 0
@@ -88,7 +102,13 @@ export async function flushQueue(run: (item: QueueItem) => Promise<{ result: Run
     return sent
   }
   if ("locks" in navigator && navigator.locks) {
+    if (options.wait) return navigator.locks.request("velofast-queue-flush", work)
     return navigator.locks.request("velofast-queue-flush", { ifAvailable: true }, async (lock) => (lock ? work() : 0))
   }
-  return work()
+  // Sem Web Locks (navegador antigo): uma fila de envios na própria aba.
+  const run_ = localFlush.catch(() => 0).then(work)
+  localFlush = run_
+  return run_
 }
+
+let localFlush: Promise<number> = Promise.resolve(0)
