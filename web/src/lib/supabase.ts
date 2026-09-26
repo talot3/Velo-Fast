@@ -1,10 +1,50 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import { GoTrueClient } from "@supabase/auth-js"
+import { PostgrestClient } from "@supabase/postgrest-js"
 
 import type { Database } from "@/data/database.types"
 import { env } from "@/lib/env"
 
 export type AppName = "pdv" | "portal" | "gelic"
-export type Supabase = SupabaseClient<Database>
+
+/** Chave onde cada app guarda a própria sessão no navegador. */
+export function storageKeyFor(app: AppName): string {
+  return `velofast-${app}-auth`
+}
+
+/**
+ * Cliente Supabase enxuto: só o que o VELO usa — sessão (`auth`) e banco
+ * (`from`/`rpc`). O supabase-js completo embute também realtime, storage e
+ * functions (~60 KB a mais para baixar e interpretar em cada app, o que pesa
+ * nas maquininhas). A montagem é a mesma do createClient do supabase-js:
+ * mesmos cabeçalhos e o token da sessão em cada chamada ao banco.
+ */
+export class Supabase extends PostgrestClient<Database> {
+  readonly auth: GoTrueClient
+
+  /** `storageKey` null = sessão só em memória (sem gravar nem renovar). */
+  constructor(storageKey: string | null) {
+    const key = env.supabaseKey
+    const base = env.supabaseUrl.replace(/\/+$/, "")
+    const auth = new GoTrueClient({
+      url: `${base}/auth/v1`,
+      headers: { Authorization: `Bearer ${key}`, apikey: key },
+      storageKey: storageKey ?? undefined,
+      persistSession: storageKey !== null,
+      autoRefreshToken: storageKey !== null,
+      detectSessionInUrl: false,
+    })
+    super(`${base}/rest/v1`, {
+      fetch: async (input, init) => {
+        const { data } = await auth.getSession()
+        const headers = new Headers(init?.headers)
+        if (!headers.has("apikey")) headers.set("apikey", key)
+        if (!headers.has("Authorization")) headers.set("Authorization", `Bearer ${data.session?.access_token ?? key}`)
+        return fetch(input, { ...init, headers })
+      },
+    })
+    this.auth = auth
+  }
+}
 
 let client: Supabase | null = null
 let currentApp: AppName | null = null
@@ -16,14 +56,7 @@ let currentApp: AppName | null = null
 export function initSupabase(app: AppName): Supabase {
   if (client && currentApp === app) return client
   currentApp = app
-  client = createClient<Database>(env.supabaseUrl, env.supabaseKey, {
-    auth: {
-      storageKey: `velofast-${app}-auth`,
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: false,
-    },
-  })
+  client = new Supabase(storageKeyFor(app))
   return client
 }
 
@@ -34,7 +67,5 @@ export function supabase(): Supabase {
 
 /** Cliente temporário para uma sessão elevada (supervisor autorizando). */
 export function createEphemeralClient(): Supabase {
-  return createClient<Database>(env.supabaseUrl, env.supabaseKey, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  })
+  return new Supabase(null)
 }
