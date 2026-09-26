@@ -97,10 +97,8 @@ export function UserDialog({ open, onOpenChange, user, users, cargos, onForbidde
         })
         if (password) await setPassword.mutateAsync({ userId: user.userId, password })
       } else {
-        const created = (await create.mutateAsync({ username: name, password, role, extra: { cargoId: cargoValue } })) as {
-          user?: { user_id?: string }
-        }
-        const newId = created?.user?.user_id
+        const created = await create.mutateAsync({ username: name, password, role, extra: { cargoId: cargoValue } })
+        const newId = created.user.user_id
         if (!ativo && newId) await update.mutateAsync({ userId: newId, active: false })
       }
       onOpenChange(false)

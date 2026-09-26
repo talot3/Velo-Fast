@@ -51,9 +51,9 @@ function PortalShell() {
         <AppSidebar page={page} onNavigate={navigate} />
         <SidebarInset className="min-w-0">
           <TopBar title={PAGE_TITLES[page]} />
-          <main className="flex-1 overflow-x-hidden p-4 md:p-6">
+          <div className="flex-1 overflow-x-hidden p-4 md:p-6">
             <PageOutlet page={page} />
-          </main>
+          </div>
         </SidebarInset>
         <CommandPalette onNavigate={navigate} />
       </SidebarProvider>

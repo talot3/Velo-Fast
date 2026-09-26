@@ -12,6 +12,8 @@
  */
 :root {
   --radius: 0.625rem;
+  /* Controles nativos (data, número, rolagem) seguem o tema. */
+  color-scheme: light;
 
   /* Portal, modo claro (antigo :root do portal) */
   --background: #f4f3f0;
@@ -33,10 +35,12 @@
   --input: #d5d3ca;
   --ring: #ffb020;
 
-  --success: #0b8a5f;
+  --success: #08734f;
   --success-soft: #34d399;
   --warning: #f5a623;
   --brand-light: #ffc555;
+  /* Âmbar da marca como COR DE TEXTO no modo claro (mesmo tom, contraste 5,5:1). */
+  --brand-text: #8a5900;
   --brand-dark: #e69a0e;
 
   --chart-1: #ffb020;
@@ -61,6 +65,7 @@
 
 /* Portal e gelic, modo escuro (antigo body.dark-mode / gelic :root) */
 .dark {
+  color-scheme: dark;
   --background: #141416;
   --foreground: #f3f3f6;
   --card: #232329;
@@ -186,5 +191,16 @@
   }
   [data-print-hide] {
     display: none !important;
+  }
+}
+
+/* Modo claro: o âmbar da marca é ótimo como fundo (botões, destaques), mas
+   ilegível como texto sobre branco (1,8:1). Só a cor de texto troca para o
+   âmbar escuro; :where() mantém a especificidade baixa, então hover e outras
+   variantes continuam valendo. O PDV e o gelic são sempre escuros. */
+@layer utilities {
+  :where(:root:not(.dark)) .text-primary,
+  :where(:root:not(.dark)) .text-warning {
+    color: var(--brand-text);
   }
 }

@@ -21,8 +21,12 @@ export function storageKeyFor(app: AppName): string {
 export class Supabase extends PostgrestClient<Database> {
   readonly auth: GoTrueClient
 
-  /** `storageKey` null = sessão só em memória (sem gravar nem renovar). */
-  constructor(storageKey: string | null) {
+  /**
+   * `storageKey` null = sessão só em memória (sem gravar nem renovar).
+   * `autoRefreshToken: false` = grava a sessão, mas deixa a renovação para o
+   * app dono dela (ex.: o gelic entregando a sessão ao portal).
+   */
+  constructor(storageKey: string | null, options: { autoRefreshToken?: boolean } = {}) {
     const key = env.supabaseKey
     const base = env.supabaseUrl.replace(/\/+$/, "")
     const auth = new GoTrueClient({
@@ -30,7 +34,7 @@ export class Supabase extends PostgrestClient<Database> {
       headers: { Authorization: `Bearer ${key}`, apikey: key },
       storageKey: storageKey ?? undefined,
       persistSession: storageKey !== null,
-      autoRefreshToken: storageKey !== null,
+      autoRefreshToken: storageKey !== null && options.autoRefreshToken !== false,
       detectSessionInUrl: false,
     })
     super(`${base}/rest/v1`, {

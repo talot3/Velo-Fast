@@ -141,7 +141,7 @@ export function useCashSessions(range?: DateRange) {
   })
 }
 
-/** Quantidade de vendas registradas (cabeçalhos) — tela de Backup. */
+/** Quantidade de fichas vendidas (itens; a v1 contava um registro por unidade) — tela de Backup. */
 export function useSalesCount() {
   const storeId = useStoreId()
   return useQuery({

@@ -32,6 +32,17 @@ export function useStoreUsers() {
   })
 }
 
+/** Perfil como a API /api/users devolve (colunas de profiles). */
+export type ApiProfile = {
+  user_id: string
+  store_id: string | null
+  username: string
+  display_name: string | null
+  role: AppUser["role"]
+  active: boolean
+  extra: AppUser["extra"] | null
+}
+
 type CreateInput = {
   username: string
   password: string
@@ -53,7 +64,7 @@ export function useCreateUser() {
   const storeId = useStoreId()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: CreateInput) => apiPost("users", { action: "create", storeId, ...input }),
+    mutationFn: (input: CreateInput) => apiPost<{ user: ApiProfile }>("users", { action: "create", storeId, ...input }),
     onSuccess: () => qc.invalidateQueries({ queryKey: key(storeId) }),
   })
 }

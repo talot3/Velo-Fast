@@ -4,6 +4,7 @@
 // (master / master123) e 30 dias de vendas, caixas e sangrias.
 // Uso: node scripts/seed-dev.mjs
 import { randomUUID } from "node:crypto"
+import { createClient } from "@supabase/supabase-js"
 
 import { adminClient, upsertAppUser } from "./lib/admin-users.mjs"
 
@@ -119,6 +120,32 @@ if (!count) {
   for (let i = 0; i < items.length; i += 500) must(await admin.from("sale_items").insert(items.slice(i, i + 500)))
   for (let i = 0; i < payments.length; i += 500) must(await admin.from("sale_payments").insert(payments.slice(i, i + 500)))
   console.log(`${sales.length} vendas, ${items.length} fichas, ${sessions.length} caixas.`)
+}
+
+// Caixas já fechados ganham o mesmo resumo que o PDV grava ao fechar
+// (cash_session_summary), para a conciliação mostrar os valores do sistema.
+// Só preenche o que falta: rodar de novo não muda nada.
+{
+  const { data: pending } = await admin.from("cash_sessions").select("id, operator_id, operator_name")
+    .eq("store_id", S).eq("status", "closed").is("closing", null)
+  if (pending?.length) {
+    const { data: op } = await admin.from("profiles").select("user_id, username").eq("store_id", S).eq("username", "caixa1").single()
+    const { data: user } = await admin.auth.admin.getUserById(op.user_id)
+    const { data: link, error: linkError } = await admin.auth.admin.generateLink({ type: "magiclink", email: user.user.email })
+    if (linkError) throw linkError
+    const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
+    const asOperator = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } })
+    must(await asOperator.auth.verifyOtp({ token_hash: link.properties.hashed_token, type: "magiclink" }))
+    for (const s of pending) {
+      const { data: summary, error } = await asOperator.rpc("cash_session_summary", { p_store_id: S, p_session_id: s.id })
+      if (error) throw error
+      delete summary.session
+      must(await admin.from("cash_sessions").update({ closing: summary, closed_by: s.operator_id, closed_by_name: s.operator_name }).eq("id", s.id))
+    }
+    await asOperator.auth.signOut()
+    console.log(`${pending.length} caixa(s) fechado(s) com resumo de fechamento.`)
+  }
 }
 
 console.log("Loja DEMO pronta. Usuários: admin, sup, caixa1 (senha 1234); master / master123.")

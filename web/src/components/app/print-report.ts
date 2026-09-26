@@ -3,6 +3,7 @@
  * antigo — mas com todo texto escapado (sem risco de script em nomes).
  */
 import { formatDateBR, formatDateTimeBR } from "@/lib/format"
+import { toast } from "sonner"
 
 export function escapeHtml(value: unknown): string {
   return String(value ?? "")
@@ -68,7 +69,7 @@ ${summary}
 export function printReport(spec: PrintReportSpec) {
   const win = window.open("", "_blank", "noopener=no")
   if (!win) {
-    alert("O navegador bloqueou a janela de impressão. Permita pop-ups para este site.")
+    toast.error("O navegador bloqueou a janela de impressão. Permita pop-ups para este site.")
     return
   }
   win.document.open()

@@ -283,6 +283,9 @@ async function importStore(storeRow, state, legacyUsers, fileUsers) {
   const records = []
   for (const [collection, list] of Object.entries(recordSources)) {
     if (!Array.isArray(list)) continue
+    // A v1 já usava esta coleção (mesmo vazia): marca como usada para as telas
+    // não mostrarem os exemplos no lugar dela (ver web/src/data/records.ts).
+    records.push({ store_id: S, collection, id: "__init__", data: { initialized: true }, created_at: orderStamp(0) })
     list.forEach((item, i) => {
       if (item?.id === undefined || item?.id === null) return
       records.push({ store_id: S, collection, id: String(item.id), data: item, created_at: orderStamp(i) })

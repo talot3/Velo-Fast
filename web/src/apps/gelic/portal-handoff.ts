@@ -1,32 +1,21 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js"
-
 import { apiPost } from "@/lib/api"
-import { env } from "@/lib/env"
 import { setStoreId } from "@/lib/store-context"
-
-/** Mesma chave que o portal usa para guardar a sessão (initSupabase("portal")). */
-const PORTAL_STORAGE_KEY = "velofast-portal-auth"
+import { storageKeyFor, Supabase } from "@/lib/supabase"
 
 type HandoffResponse = {
   session: { access_token: string; refresh_token: string }
 }
 
-let portalAuth: SupabaseClient | null = null
+let portalAuth: Supabase | null = null
 
 /**
  * Cliente temporário só para gravar a sessão na chave do portal. Sem renovação
  * automática: quem cuida da sessão depois é o próprio portal. Criado uma vez
  * para não abrir dois clientes na mesma chave se o master tentar de novo.
  */
-function portalAuthClient(): SupabaseClient {
-  portalAuth ??= createClient(env.supabaseUrl, env.supabaseKey, {
-    auth: {
-      storageKey: PORTAL_STORAGE_KEY,
-      persistSession: true,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-    },
-  })
+function portalAuthClient(): Supabase {
+  // Mesma chave que o portal usa para guardar a sessão (initSupabase("portal")).
+  portalAuth ??= new Supabase(storageKeyFor("portal"), { autoRefreshToken: false })
   return portalAuth
 }
 

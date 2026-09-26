@@ -10,9 +10,11 @@
  *   skills_pipeline
  * Documentos: swot, action_plan
  *
- * Dados de exemplo ("seed"): quando a coleção está vazia, as telas mostram
- * os dados de exemplo do sistema antigo sem gravá-los. Na primeira gravação
- * os exemplos são gravados junto, para não sumirem.
+ * Dados de exemplo ("seed"): enquanto a coleção nunca foi usada, as telas
+ * mostram os dados de exemplo do sistema antigo sem gravá-los. Na primeira
+ * gravação ou exclusão os exemplos são gravados junto (para não sumirem) e a
+ * coleção ganha uma linha-marcador ("__init__"): a partir daí, lista vazia é
+ * vazia de verdade — excluir tudo não traz os exemplos de volta (como na v1).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
@@ -41,9 +43,20 @@ type WithId = { id: string | number }
 
 const recordsKey = (storeId: string, collection: string) => ["store_records", storeId, collection] as const
 
-type RecordsResult<T> = { items: T[]; isSeed: boolean }
+/** Id da linha-marcador "coleção já usada" (nunca aparece nas telas). */
+const INIT_ID = "__init__"
 
-async function fetchRecords<T extends WithId>(storeId: string, collection: RecordCollection): Promise<T[]> {
+type RecordsResult<T> = {
+  items: T[]
+  isSeed: boolean
+  /** A linha-marcador já existe no banco. */
+  marked?: boolean
+}
+
+async function fetchRecords<T extends WithId>(
+  storeId: string,
+  collection: RecordCollection
+): Promise<{ items: T[]; marked: boolean }> {
   const { data, error } = await supabase()
     .from("store_records")
     .select("id, data, created_at")
@@ -51,24 +64,47 @@ async function fetchRecords<T extends WithId>(storeId: string, collection: Recor
     .eq("collection", collection)
     .order("created_at", { ascending: true })
   if (error) throw error
-  return data.map((r) => {
+  let marked = false
+  const items: T[] = []
+  for (const r of data) {
+    if (r.id === INIT_ID) {
+      marked = true
+      continue
+    }
     const value = (r.data ?? {}) as Record<string, unknown>
     // O id original (número no sistema antigo) fica dentro de data.
-    return { ...value, id: value.id ?? r.id } as T
-  })
+    items.push({ ...value, id: value.id ?? r.id } as T)
+  }
+  return { items, marked }
 }
 
-/** Lista uma coleção. Com `seed`, mostra os exemplos enquanto estiver vazia. */
+/** Lista uma coleção. Com `seed`, mostra os exemplos enquanto ela nunca foi usada. */
 export function useRecords<T extends WithId>(collection: RecordCollection, seed?: T[]) {
   const storeId = useStoreId()
   return useQuery<RecordsResult<T>>({
     queryKey: recordsKey(storeId, collection),
     queryFn: async () => {
-      const items = await fetchRecords<T>(storeId, collection)
-      if (items.length === 0 && seed && seed.length > 0) return { items: seed, isSeed: true }
-      return { items, isSeed: false }
+      const { items, marked } = await fetchRecords<T>(storeId, collection)
+      if (items.length === 0 && !marked && seed && seed.length > 0) return { items: seed, isSeed: true, marked }
+      return { items, isSeed: false, marked }
     },
   })
+}
+
+/**
+ * Gravações de uma mesma coleção rodam uma de cada vez: cada uma parte do
+ * resultado da anterior (duas edições rápidas sobre os exemplos não se
+ * sobrescrevem).
+ */
+const writeQueues = new Map<string, Promise<unknown>>()
+function inOrder<R>(queue: string, task: () => Promise<R>): Promise<R> {
+  const run = (writeQueues.get(queue) ?? Promise.resolve()).catch(() => undefined).then(task)
+  writeQueues.set(queue, run)
+  return run
+}
+
+function markerRow(storeId: string, collection: RecordCollection) {
+  return { store_id: storeId, collection, id: INIT_ID, data: { initialized: true } as NonNullable<Json> }
 }
 
 function toRow(storeId: string, collection: RecordCollection, item: WithId) {
@@ -85,20 +121,30 @@ export function useSaveRecords<T extends WithId>(collection: RecordCollection) {
   const storeId = useStoreId()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (items: T | T[]) => {
-      const list = Array.isArray(items) ? items : [items]
-      const cached = qc.getQueryData<RecordsResult<T>>(recordsKey(storeId, collection))
-      const rows = new Map<string, ReturnType<typeof toRow>>()
-      if (cached?.isSeed) {
-        for (const s of cached.items) rows.set(String(s.id), toRow(storeId, collection, s))
-      }
-      for (const item of list) rows.set(String(item.id), toRow(storeId, collection, item))
-      if (rows.size === 0) return
-      const { error } = await supabase()
-        .from("store_records")
-        .upsert([...rows.values()], { onConflict: "store_id,collection,id", defaultToNull: false })
-      if (error) throw error
-    },
+    mutationFn: (items: T | T[]) =>
+      inOrder(`${storeId}/${collection}`, async () => {
+        const list = Array.isArray(items) ? items : [items]
+        const key = recordsKey(storeId, collection)
+        const cached = qc.getQueryData<RecordsResult<T>>(key)
+        const rows = new Map<string, ReturnType<typeof toRow>>()
+        if (cached?.isSeed) {
+          for (const s of cached.items) rows.set(String(s.id), toRow(storeId, collection, s))
+        }
+        for (const item of list) rows.set(String(item.id), toRow(storeId, collection, item))
+        if (rows.size === 0) return
+        if (!cached?.marked) rows.set(INIT_ID, markerRow(storeId, collection))
+        const { error } = await supabase()
+          .from("store_records")
+          .upsert([...rows.values()], { onConflict: "store_id,collection,id", defaultToNull: false })
+        if (error) throw error
+        // O cache passa a refletir o que foi gravado (antes mesmo de recarregar
+        // do banco): a próxima gravação não regrava os exemplos por cima.
+        if (cached) {
+          const byId = new Map(cached.items.map((i) => [String(i.id), i]))
+          for (const item of list) byId.set(String(item.id), item)
+          qc.setQueryData<RecordsResult<T>>(key, { items: [...byId.values()], isSeed: false, marked: true })
+        }
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: recordsKey(storeId, collection) }),
   })
 }
@@ -108,28 +154,37 @@ export function useRemoveRecords(collection: RecordCollection) {
   const storeId = useStoreId()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (ids: (string | number) | (string | number)[]) => {
-      const list = (Array.isArray(ids) ? ids : [ids]).map(String)
-      const cached = qc.getQueryData<RecordsResult<WithId>>(recordsKey(storeId, collection))
-      if (cached?.isSeed) {
-        // Exclusão de um exemplo: grava os demais exemplos para não voltarem.
-        const keep = cached.items.filter((s) => !list.includes(String(s.id)))
-        if (keep.length > 0) {
+    mutationFn: (ids: (string | number) | (string | number)[]) =>
+      inOrder(`${storeId}/${collection}`, async () => {
+        const list = (Array.isArray(ids) ? ids : [ids]).map(String)
+        const key = recordsKey(storeId, collection)
+        const cached = qc.getQueryData<RecordsResult<WithId>>(key)
+        const upsert = async (rows: ReturnType<typeof markerRow>[]) => {
           const { error } = await supabase()
             .from("store_records")
-            .upsert(keep.map((s) => toRow(storeId, collection, s)), { onConflict: "store_id,collection,id", defaultToNull: false })
+            .upsert(rows, { onConflict: "store_id,collection,id", defaultToNull: false })
           if (error) throw error
         }
-        return
-      }
-      const { error } = await supabase()
-        .from("store_records")
-        .delete()
-        .eq("store_id", storeId)
-        .eq("collection", collection)
-        .in("id", list)
-      if (error) throw error
-    },
+        if (cached?.isSeed) {
+          // Exclusão de um exemplo: grava os demais exemplos (e o marcador)
+          // para não voltarem — mesmo que não sobre nenhum.
+          const keep = cached.items.filter((s) => !list.includes(String(s.id)))
+          await upsert([...keep.map((s) => toRow(storeId, collection, s)), markerRow(storeId, collection)])
+        } else {
+          const { error } = await supabase()
+            .from("store_records")
+            .delete()
+            .eq("store_id", storeId)
+            .eq("collection", collection)
+            .in("id", list.filter((id) => id !== INIT_ID))
+          if (error) throw error
+          if (!cached?.marked) await upsert([markerRow(storeId, collection)])
+        }
+        if (cached) {
+          const items = cached.items.filter((i) => !list.includes(String(i.id)))
+          qc.setQueryData<RecordsResult<WithId>>(key, { items, isSeed: false, marked: true })
+        }
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: recordsKey(storeId, collection) }),
   })
 }
