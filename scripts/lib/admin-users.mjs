@@ -4,9 +4,10 @@ import { createHash, randomUUID } from "node:crypto"
 import bcrypt from "bcryptjs"
 import { createClient } from "@supabase/supabase-js"
 
+// Mesmo cálculo de api/_lib/identity.ts (domínio .invalid: nunca recebe e-mail).
 export function authEmail(storeId, username) {
   const key = `${storeId ?? "*"}:${username.trim().toLowerCase()}`
-  return `u${createHash("sha256").update(key).digest("hex").slice(0, 40)}@users.velofast.app`
+  return `u${createHash("sha256").update(key).digest("hex").slice(0, 40)}@users.velofast.invalid`
 }
 
 export function adminClient(url = process.env.SUPABASE_URL, key = process.env.SUPABASE_SERVICE_ROLE_KEY) {

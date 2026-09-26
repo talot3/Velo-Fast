@@ -1,6 +1,6 @@
-import { HttpError, route } from "../_lib/http.js"
+import { clientIp, HttpError, route } from "../_lib/http.js"
 import { requireCaller } from "../_lib/session.js"
-import { adminClient, publicClient } from "../_lib/supabase.js"
+import { adminClient, sessionClient } from "../_lib/supabase.js"
 
 /**
  * "Entrar" do painel master (gelic) no portal de uma loja: cria uma sessão
@@ -18,7 +18,7 @@ export default route(["POST"], async (req) => {
   const { data: link, error: linkError } = await admin.auth.admin.generateLink({ type: "magiclink", email: user.user.email })
   if (linkError || !link.properties?.hashed_token) throw linkError ?? new Error("Falha ao gerar sessão.")
 
-  const { data: auth, error: otpError } = await publicClient().auth.verifyOtp({
+  const { data: auth, error: otpError } = await sessionClient(clientIp(req)).auth.verifyOtp({
     token_hash: link.properties.hashed_token,
     type: "magiclink",
   })

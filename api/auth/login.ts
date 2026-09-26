@@ -1,8 +1,8 @@
 import bcrypt from "bcryptjs"
 
-import { HttpError, readBody, route } from "../_lib/http.js"
+import { clientIp, HttpError, readBody, route } from "../_lib/http.js"
 import { ROLE_LEVEL, type Role } from "../_lib/session.js"
-import { adminClient, publicClient } from "../_lib/supabase.js"
+import { adminClient, sessionClient } from "../_lib/supabase.js"
 
 type LoginBody = {
   storeId?: string | null
@@ -88,7 +88,7 @@ export default route(["POST"], async (req) => {
   })
   if (linkError || !link.properties?.hashed_token) throw linkError ?? new Error("Falha ao gerar sessão.")
 
-  const { data: auth, error: otpError } = await publicClient().auth.verifyOtp({
+  const { data: auth, error: otpError } = await sessionClient(clientIp(req)).auth.verifyOtp({
     token_hash: link.properties.hashed_token,
     type: "magiclink",
   })

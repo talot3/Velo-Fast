@@ -1,3 +1,5 @@
+import { isIP } from "node:net"
+
 import type { VercelRequest, VercelResponse } from "@vercel/node"
 
 export class HttpError extends Error {
@@ -49,4 +51,14 @@ export function bearerToken(req: VercelRequest): string {
   const header = req.headers.authorization ?? ""
   if (!header.startsWith("Bearer ")) throw new HttpError(401, "Sessão expirada. Faça login novamente.")
   return header.slice("Bearer ".length)
+}
+
+/** IP de quem chamou. Na Vercel, x-real-ip / x-forwarded-for vêm da própria plataforma. */
+export function clientIp(req: VercelRequest): string | null {
+  const header = (name: string) => {
+    const value = req.headers[name]
+    return (Array.isArray(value) ? value[0] : value)?.split(",")[0]?.trim()
+  }
+  const ip = header("x-real-ip") || header("x-forwarded-for")
+  return ip && isIP(ip) ? ip : null
 }

@@ -13,7 +13,4 @@ export const env = {
   get serviceRoleKey() {
     return required("SUPABASE_SERVICE_ROLE_KEY")
   },
-  get publishableKey() {
-    return process.env.SUPABASE_PUBLISHABLE_KEY || required("VITE_SUPABASE_PUBLISHABLE_KEY")
-  },
 }
