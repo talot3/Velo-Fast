@@ -387,6 +387,20 @@ describe("painel master", () => {
     const updated = await master.client.rpc("master_update_store", { p_store_id: created.data.id, p_active: false, p_terminals_allowed: 3 })
     assert.equal(updated.data.active, false)
     assert.equal(updated.data.terminalsAllowed, 3)
+    // Bloquear/liberar sem informar o limite não pode mexer nele.
+    const toggled = await master.client.rpc("master_update_store", { p_store_id: created.data.id, p_active: true })
+    assert.ifError(toggled.error)
+    assert.equal(toggled.data.active, true)
+    assert.equal(toggled.data.terminalsAllowed, 3)
+
+    // Ponte que nunca se conectou aparece como offline (false, não null).
+    const { error: bridgeError } = await admin.from("printer_bridges").insert(
+      { store_id: B, name: "Nunca vista", key_prefix: `vfb_${RUN}nv`, key_hash: randomUUID() },
+      { defaultToNull: false }
+    )
+    assert.ifError(bridgeError)
+    const withBridge = await master.client.rpc("master_list_stores")
+    assert.equal(withBridge.data.find((s) => s.id === B)?.bridge?.online, false)
 
     const list = await master.client.rpc("master_list_stores")
     assert.ok(list.data.some((s) => s.id === A && s.bridge?.name === "Ponte teste"))
@@ -406,6 +420,13 @@ describe("usuários (/api/users)", () => {
 
     const s = await loginAs(A, "novo caixa", "7777")
     assert.equal(s.user.role, "operador")
+  })
+
+  test("admin não reduz o próprio nível de acesso", async () => {
+    const r = await api("users", { action: "update", userId: adm.user.id, role: "operador" }, adm.token)
+    assert.equal(r.status, 400, JSON.stringify(r.body))
+    const same = await api("users", { action: "update", userId: adm.user.id, role: "admin", displayName: "Ana" }, adm.token)
+    assert.equal(same.status, 200, JSON.stringify(same.body))
   })
 
   test("supervisor não promove ninguém a admin", async () => {

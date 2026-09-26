@@ -39,7 +39,7 @@ begin
       'activeTerminals', (select count(*) from public.terminals t where t.store_id = s.id and t.active),
       'bridge', (
         select jsonb_build_object(
-          'online', b.last_seen_at > now() - interval '30 seconds',
+          'online', coalesce(b.last_seen_at > now() - interval '30 seconds', false),
           'lastSeenAt', b.last_seen_at,
           'name', b.name
         )
@@ -137,7 +137,8 @@ begin
   update public.stores
      set active = coalesce(p_active, active),
          expire_date = coalesce(p_expire_date, expire_date),
-         terminals_allowed = coalesce(greatest(p_terminals_allowed, 1), terminals_allowed)
+         -- greatest() ignora NULL: sem este case, bloquear/liberar zerava o limite para 1.
+         terminals_allowed = case when p_terminals_allowed is null then terminals_allowed else greatest(p_terminals_allowed, 1) end
    where id = p_store_id
   returning * into v_store;
   if not found then

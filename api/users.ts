@@ -119,6 +119,11 @@ export default route(["POST"], async (req) => {
     if (target.user_id === caller.userId && body.active === false) {
       throw new HttpError(400, "Você não pode desativar o próprio usuário.")
     }
+    // Como na desativação: ninguém rebaixa a si mesmo (a loja ficaria sem
+    // quem administre os usuários).
+    if (target.user_id === caller.userId && body.role !== undefined && ROLE_LEVEL[body.role] < ROLE_LEVEL[target.role as Role]) {
+      throw new HttpError(400, "Você não pode reduzir o próprio nível de acesso.")
+    }
 
     const patch: Record<string, unknown> = {}
     if (body.displayName !== undefined) patch.display_name = body.displayName
