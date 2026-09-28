@@ -231,28 +231,28 @@ begin
   loop
     execute format('alter table public.%I enable row level security', t);
     execute format($p$create policy %I on public.%I for select to authenticated
-      using ((select private.can_access_store(store_id)))$p$, t || '_select', t);
+      using (((select private.is_master()) or store_id = (select private.current_store_id())))$p$, t || '_select', t);
     execute format($p$create policy %I on public.%I for insert to authenticated
-      with check ((select private.can_manage_store(store_id, 'supervisor')))$p$, t || '_insert', t);
+      with check (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))))$p$, t || '_insert', t);
     execute format($p$create policy %I on public.%I for update to authenticated
-      using ((select private.can_manage_store(store_id, 'supervisor')))
-      with check ((select private.can_manage_store(store_id, 'supervisor')))$p$, t || '_update', t);
+      using (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))))
+      with check (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))))$p$, t || '_update', t);
     execute format($p$create policy %I on public.%I for delete to authenticated
-      using ((select private.can_manage_store(store_id, 'supervisor')))$p$, t || '_delete', t);
+      using (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))))$p$, t || '_delete', t);
   end loop;
 end $$;
 
 -- Documentos e registros do portal: leitura e escrita a partir de supervisor.
 alter table public.store_records enable row level security;
 create policy store_records_select on public.store_records for select to authenticated
-  using ((select private.can_manage_store(store_id, 'supervisor')));
+  using (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))));
 create policy store_records_insert on public.store_records for insert to authenticated
-  with check ((select private.can_manage_store(store_id, 'supervisor')));
+  with check (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))));
 create policy store_records_update on public.store_records for update to authenticated
-  using ((select private.can_manage_store(store_id, 'supervisor')))
-  with check ((select private.can_manage_store(store_id, 'supervisor')));
+  using (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))))
+  with check (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))));
 create policy store_records_delete on public.store_records for delete to authenticated
-  using ((select private.can_manage_store(store_id, 'supervisor')));
+  using (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))));
 
 create or replace function private.stamp_record_author()
 returns trigger
@@ -270,11 +270,11 @@ create trigger store_records_author before insert or update on public.store_reco
 
 alter table public.store_documents enable row level security;
 create policy store_documents_select on public.store_documents for select to authenticated
-  using ((select private.can_manage_store(store_id, 'supervisor')));
+  using (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))));
 create policy store_documents_insert on public.store_documents for insert to authenticated
-  with check ((select private.can_manage_store(store_id, 'supervisor')));
+  with check (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))));
 create policy store_documents_update on public.store_documents for update to authenticated
-  using ((select private.can_manage_store(store_id, 'supervisor')))
-  with check ((select private.can_manage_store(store_id, 'supervisor')));
+  using (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))))
+  with check (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('supervisor')))));
 create policy store_documents_delete on public.store_documents for delete to authenticated
-  using ((select private.can_manage_store(store_id, 'admin')));
+  using (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('admin')))));

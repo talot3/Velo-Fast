@@ -230,13 +230,18 @@ grant execute on function
 to authenticated, service_role;
 
 -- ─── RLS: lojas e perfis ────────────────────────────────────────────
+-- Forma das políticas: "(select private.is_master()) or store_id =
+-- (select private.current_store_id())". As subconsultas não dependem da
+-- linha, então o Postgres as calcula UMA vez por consulta; uma função que
+-- recebe a coluna (can_access_store(store_id)) rodaria linha a linha
+-- (8 s para contar 40 mil fichas, contra milissegundos assim).
 alter table public.stores enable row level security;
 alter table public.profiles enable row level security;
 
 -- A própria loja fica visível para os membros; o master vê todas.
 create policy stores_select on public.stores
   for select to authenticated
-  using ((select private.can_access_store(id)));
+  using (((select private.is_master()) or id = (select private.current_store_id())));
 
 -- Só o master cria/edita lojas e licenças (pelo painel gelic).
 create policy stores_master_write on public.stores
@@ -249,8 +254,8 @@ create policy profiles_select on public.profiles
   for select to authenticated
   using (
     user_id = (select auth.uid())
-    or (select private.can_manage_store(store_id, 'admin'))
     or (select private.is_master())
+    or (store_id = (select private.current_store_id()) and (select private.has_role('admin')))
   );
 -- Escrita de perfis só pelas funções de servidor (service role), que
 -- também criam o usuário no Auth e a senha.

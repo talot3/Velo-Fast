@@ -153,20 +153,20 @@ alter table public.printer_bridges enable row level security;
 alter table public.print_jobs enable row level security;
 
 create policy cash_sessions_select on public.cash_sessions for select to authenticated
-  using ((select private.can_access_store(store_id)));
+  using (((select private.is_master()) or store_id = (select private.current_store_id())));
 create policy cash_movements_select on public.cash_movements for select to authenticated
-  using ((select private.can_access_store(store_id)));
+  using (((select private.is_master()) or store_id = (select private.current_store_id())));
 create policy sales_select on public.sales for select to authenticated
-  using ((select private.can_access_store(store_id)));
+  using (((select private.is_master()) or store_id = (select private.current_store_id())));
 create policy sale_items_select on public.sale_items for select to authenticated
-  using ((select private.can_access_store(store_id)));
+  using (((select private.is_master()) or store_id = (select private.current_store_id())));
 create policy sale_payments_select on public.sale_payments for select to authenticated
-  using ((select private.can_access_store(store_id)));
+  using (((select private.is_master()) or store_id = (select private.current_store_id())));
 create policy print_jobs_select on public.print_jobs for select to authenticated
-  using ((select private.can_access_store(store_id)));
+  using (((select private.is_master()) or store_id = (select private.current_store_id())));
 -- Pontes: status visível para admin da loja e master (a chave nunca sai).
 create policy printer_bridges_select on public.printer_bridges for select to authenticated
-  using ((select private.can_manage_store(store_id, 'admin')));
+  using (((select private.is_master()) or (store_id = (select private.current_store_id()) and (select private.has_role('admin')))));
 
 -- O hash da chave nunca é legível pelo navegador: acesso só às outras colunas.
 revoke all on public.printer_bridges from anon, authenticated;
