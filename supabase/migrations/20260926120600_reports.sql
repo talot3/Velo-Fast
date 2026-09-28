@@ -44,7 +44,10 @@ stable
 security definer
 set search_path = ''
 as $$
-  with sale_active as (
+  -- materialized: numa função SQL o plano é genérico e o planejador estimava
+  -- 1 linha para os filtros opcionais, refazendo o rateio a cada venda (O(n²):
+  -- 6 s para 400 vendas). Materializando cada etapa, o custo fica linear.
+  with sale_active as materialized (
     select s.id, s.kind, s.terminal_id, s.terminal_name, s.payment_label, s.sold_at, s.change_total,
            coalesce(sum(si.unit_price) filter (where si.status = 'active'), 0) as active_total,
            count(si.id) filter (where si.status = 'active') as active_units
@@ -56,14 +59,14 @@ as $$
       and (p_to is null or s.sold_at < p_to)
     group by s.id
   ),
-  pay_by_method as (
+  pay_by_method as materialized (
     select sp.sale_id, sp.method_name, sum(sp.amount) as amount,
            (upper(sp.method_name) like '%DINHEIRO%' or upper(sp.method_name) like '%CASH%') as is_cash
     from public.sale_payments sp
     join sale_active sa on sa.id = sp.sale_id
     group by sp.sale_id, sp.method_name
   ),
-  pay_net as (
+  pay_net as materialized (
     select pm.sale_id, pm.method_name, pm.is_cash,
            pm.amount - case
              when pm.is_cash and sa.kind = 'sale' then
