@@ -51,6 +51,8 @@ export default function Page() {
   function printFechamento() {
     printReport({
       title: "Relatório de Fechamento",
+      heading: "MAPA GERAL DE FECHAMENTO DE CAIXAS",
+      orientation: "landscape",
       period: range,
       summary: [
         { label: "Saldo Total em Gaveta (Líquido)", value: formatBRL(totals.gaveta) },

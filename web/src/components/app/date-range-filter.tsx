@@ -15,15 +15,17 @@ type DateRangeFilterProps = {
   /** Prefixo dos ids dos campos (ex.: "prod" → prod-start / prod-end). */
   idPrefix: string
   searchLabel?: string
+  /** Atalho que corresponde ao período inicial (fica destacado ao abrir, como no sistema antigo). */
+  defaultPreset?: DatePreset
 }
 
 /**
  * Filtro "De / Até" com os 8 atalhos de período do sistema antigo. Datas
  * digitadas só valem ao clicar em buscar; atalhos aplicam na hora.
  */
-export function DateRangeFilter({ value, onChange, idPrefix, searchLabel = "Buscar" }: DateRangeFilterProps) {
+export function DateRangeFilter({ value, onChange, idPrefix, searchLabel = "Buscar", defaultPreset }: DateRangeFilterProps) {
   const [draft, setDraft] = useState(value)
-  const [preset, setPreset] = useState<DatePreset | "">("")
+  const [preset, setPreset] = useState<DatePreset | "">(defaultPreset ?? "")
 
   return (
     <Card>

@@ -40,7 +40,7 @@ export function SalesReportLayout({
 }) {
   return (
     <div className="flex flex-col gap-6">
-      <DateRangeFilter idPrefix={idPrefix} value={range} onChange={onRangeChange} />
+      <DateRangeFilter idPrefix={idPrefix} value={range} onChange={onRangeChange} defaultPreset="hoje" />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-lg font-black tracking-tight">Resultados da Busca</h3>

@@ -39,6 +39,7 @@ export default function Page() {
     if (!data) return
     printReport({
       title: "Relatório por Período",
+      heading: "RELATÓRIO DE VENDAS POR PERÍODO",
       period: range,
       summary: [
         { label: "Total Arrecadado", value: formatBRL(data.total) },

@@ -53,6 +53,8 @@ export default function Page() {
   function exportPdf() {
     printReport({
       title: "Inventario de Estoque",
+      heading: "INVENTARIO DE ESTOQUE",
+      orientation: "landscape",
       columns: ["Codigo", "Produto", "Subgrupo", "Estoque", "Preco Venda", "Valor Total", "Status"],
       align: ["left", "left", "left", "center", "right", "right", "center"],
       rows: products.map((p) => [

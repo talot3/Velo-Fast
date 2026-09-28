@@ -17,6 +17,10 @@ export function escapeHtml(value: unknown): string {
 export type PrintReportSpec = {
   /** Título da janela e do cabeçalho (ex.: "Relatório de Vendas por Produto"). */
   title: string
+  /** Texto do cabeçalho, quando difere do título da janela (ex.: "MAPA GERAL DE FECHAMENTO DE CAIXAS"). */
+  heading?: string
+  /** Folha A4 em pé (padrão) ou deitada, como alguns relatórios do sistema antigo. */
+  orientation?: "portrait" | "landscape"
   /** Período exibido no cabeçalho ("YYYY-MM-DD"). */
   period?: { from: string; to: string }
   summary?: { label: string; value: string }[]
@@ -45,7 +49,7 @@ export function renderReportHtml(spec: PrintReportSpec): string {
   const period = spec.period ? ` | Período: ${formatDateBR(spec.period.from)} até ${formatDateBR(spec.period.to)}` : ""
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${escapeHtml(spec.title)}</title>
 <style>
-@page{size:A4;margin:14mm}
+@page{size:A4${spec.orientation === "landscape" ? " landscape" : ""};margin:14mm}
 body{font-family:Outfit,Segoe UI,Arial,sans-serif;color:#1c1c1e;margin:0}
 .hdr{background:#800020;color:#fff;padding:18px 22px;border-radius:8px}
 .hdr h1{margin:0 0 4px;font-size:20px}.hdr p{margin:2px 0;font-size:12px;opacity:.9}
@@ -58,7 +62,7 @@ td{padding:7px 8px;border-bottom:1px solid #eee}
 tfoot td{font-weight:800;border-top:2px solid #1c1c1e;background:#faf9f7}
 .foot{margin-top:18px;font-size:11px;color:#7a7975;text-align:center}
 </style></head><body>
-<div class="hdr"><h1>${escapeHtml(spec.title)}</h1><p>TicketPro Portal de Gestão</p><p>Emitido em: ${escapeHtml(formatDateTimeBR(new Date()))}${escapeHtml(period)}</p></div>
+<div class="hdr"><h1>${escapeHtml(spec.heading ?? spec.title)}</h1><p>TicketPro Portal de Gestão</p><p>Emitido em: ${escapeHtml(formatDateTimeBR(new Date()))}${escapeHtml(period)}</p></div>
 ${summary}
 <table><thead><tr>${head}</tr></thead><tbody>${body}</tbody>${foot}</table>
 <div class="foot">TicketPro Sistema de Gestão - Relatório gerado automaticamente</div>

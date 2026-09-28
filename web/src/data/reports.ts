@@ -2,7 +2,7 @@
  * Relatórios calculados no banco (RPCs report_*). As datas são dias
  * "YYYY-MM-DD" no fuso de São Paulo (use lib/format: todayBR, presetRange).
  */
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 import type { CashMovement, CashSession } from "@/data/types"
 import { useStoreId } from "@/lib/auth"
@@ -65,6 +65,7 @@ function rpcQuery<T>(name: string, args: Record<string, unknown>) {
 export function useSalesByProduct(range: DateRange) {
   const storeId = useStoreId()
   return useQuery({
+    placeholderData: keepPreviousData,
     queryKey: ["report_sales_by_product", storeId, range.from, range.to],
     queryFn: rpcQuery<SalesByProduct>("report_sales_by_product", { p_store_id: storeId, p_from: range.from, p_to: range.to }),
   })
@@ -73,6 +74,7 @@ export function useSalesByProduct(range: DateRange) {
 export function useSalesByTerminal(range: DateRange) {
   const storeId = useStoreId()
   return useQuery({
+    placeholderData: keepPreviousData,
     queryKey: ["report_sales_by_terminal", storeId, range.from, range.to],
     queryFn: rpcQuery<SalesByTerminal>("report_sales_by_terminal", { p_store_id: storeId, p_from: range.from, p_to: range.to }),
   })
@@ -81,6 +83,7 @@ export function useSalesByTerminal(range: DateRange) {
 export function useCashClosingReport(range: DateRange) {
   const storeId = useStoreId()
   return useQuery({
+    placeholderData: keepPreviousData,
     queryKey: ["report_cash_closing", storeId, range.from, range.to],
     queryFn: rpcQuery<CashClosingReport>("report_cash_closing", { p_store_id: storeId, p_from: range.from, p_to: range.to }),
   })
@@ -108,6 +111,7 @@ function startOfDayIso(day: string) {
 export function useCashMovements(range: DateRange, kind: "sangria" | "suprimento" = "sangria") {
   const storeId = useStoreId()
   return useQuery({
+    placeholderData: keepPreviousData,
     queryKey: ["cash_movements", storeId, kind, range.from, range.to],
     queryFn: async () => {
       const { data, error } = await supabase()
