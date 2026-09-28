@@ -63,3 +63,19 @@ os CDNs fazem. "Reabertura" = abrir de novo no mesmo aparelho.
 - Vendas e sangrias sem internet vão para uma fila no IndexedDB, reenviada em ordem e sem duplicar.
 - Uma venda recusada pelo servidor ao sincronizar fica visível no cabeçalho ("N falha(s)") com
   "Tentar novamente".
+
+## 5. Banco de dados (medido com a loja de demonstração e com uma loja simulada de 20 mil vendas)
+
+| Consulta | Antes (~400 vendas) | Depois (~400 vendas) | Depois, 20 mil vendas |
+|---|---|---|---|
+| Dashboard (todo o período) | 6,1 s | 42 ms | 0,8 s |
+| Relatório de Fechamento (30 dias) | 4,8 s | 27 ms | 0,4 s |
+| Contar as fichas da loja (tela de Backup) | 8,2 s* | 7 ms* | — |
+
+\* com 40 mil fichas.
+
+- **Rateio dos pagamentos** (base do Dashboard, do Fechamento e do resumo do caixa): o planejador refazia
+  o cálculo a cada venda (custo quadrático). Com as etapas materializadas, o custo ficou linear e o
+  resultado é idêntico ao anterior.
+- **Regras de acesso (RLS):** a checagem "esta loja é do usuário?" rodava linha a linha; agora é
+  calculada uma vez por consulta, com as mesmas regras (testes de isolamento entre lojas passando).

@@ -30,7 +30,7 @@
   --muted-foreground: #7a7975;
   --accent: #e8e6df;
   --accent-foreground: #1c1c1e;
-  --destructive: #ff5470;
+  --destructive: #d0213f; /* modo claro: 5,3:1 no branco (#ff5470 dava 3,1:1) */
   --border: #e3e1da;
   --input: #d5d3ca;
   --ring: #ffb020;
@@ -41,6 +41,8 @@
   --brand-light: #ffc555;
   /* Âmbar da marca como COR DE TEXTO no modo claro (mesmo tom, contraste 5,5:1). */
   --brand-text: #8a5900;
+  /* Azul informativo (tom chart-3) como COR DE TEXTO no modo claro: 6:1. */
+  --info-text: #1d5fc4;
   --brand-dark: #e69a0e;
 
   --chart-1: #ffb020;
@@ -202,5 +204,8 @@
   :where(:root:not(.dark)) .text-primary,
   :where(:root:not(.dark)) .text-warning {
     color: var(--brand-text);
+  }
+  :where(:root:not(.dark)) .text-chart-3 {
+    color: var(--info-text);
   }
 }
